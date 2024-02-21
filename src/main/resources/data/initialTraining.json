@@ -22,7 +22,7 @@
     },
     "trainingType": {
       "id": "1",
-      "name": "Pass"
+      "name": "Cardio"
     },
     "trainingName": "Cardio Basics",
     "trainingDate": "2024-03-01",
@@ -50,8 +50,8 @@
       "address": "456 Elm St"
     },
     "trainingType": {
-      "id": "1",
-      "name": "Pass"
+      "id": "2",
+      "name": "Advanced Stretching"
     },
     "trainingName": "Advanced Strength",
     "trainingDate": "2024-03-15",
