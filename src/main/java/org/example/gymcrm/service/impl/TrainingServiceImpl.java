@@ -1,7 +1,8 @@
-package org.example.gymcrm.service;
+package org.example.gymcrm.service.impl;
 
 import org.example.gymcrm.dao.TrainingDao;
 import org.example.gymcrm.model.Training;
+import org.example.gymcrm.service.TrainingService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

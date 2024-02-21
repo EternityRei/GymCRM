@@ -1,7 +1,8 @@
-package org.example.gymcrm.service;
+package org.example.gymcrm.service.impl;
 
 import org.example.gymcrm.dao.TrainerDao;
 import org.example.gymcrm.model.Trainer;
+import org.example.gymcrm.service.impl.TrainerServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
