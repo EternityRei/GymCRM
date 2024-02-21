@@ -1,10 +1,11 @@
-package org.example.gymcrm.service;
+package org.example.gymcrm.service.impl;
 
 import org.example.gymcrm.dao.TrainingDao;
 import org.example.gymcrm.model.Trainee;
 import org.example.gymcrm.model.Trainer;
 import org.example.gymcrm.model.Training;
 import org.example.gymcrm.model.TrainingType;
+import org.example.gymcrm.service.impl.TrainingServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -84,7 +85,7 @@ class TrainingServiceImplTest {
                         "1990-07-15",
                         "456 Elm St"
                 ),
-                TrainingType.PASS,
+                new TrainingType("1", "Pass"),
                 "Advanced Strength",
                 Date.valueOf("2024-03-15"),
                 21
