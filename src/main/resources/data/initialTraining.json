@@ -20,7 +20,10 @@
       "dateOfBirth": "1995-04-23",
       "address": "123 Main St"
     },
-    "trainingType": "PASS",
+    "trainingType": {
+      "id": "1",
+      "name": "Pass"
+    },
     "trainingName": "Cardio Basics",
     "trainingDate": "2024-03-01",
     "trainingDuration": "34"
@@ -46,7 +49,10 @@
       "dateOfBirth": "1990-07-15",
       "address": "456 Elm St"
     },
-    "trainingType": "PASS",
+    "trainingType": {
+      "id": "1",
+      "name": "Pass"
+    },
     "trainingName": "Advanced Strength",
     "trainingDate": "2024-03-15",
     "trainingDuration": "21"
