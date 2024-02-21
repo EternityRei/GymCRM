@@ -1,7 +1,8 @@
-package org.example.gymcrm.service;
+package org.example.gymcrm.service.impl;
 
 import org.example.gymcrm.dao.TraineeDao;
 import org.example.gymcrm.model.Trainee;
+import org.example.gymcrm.service.TraineeService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,54 +22,6 @@ public class TraineeServiceImpl implements TraineeService {
     public TraineeServiceImpl(TraineeDao traineeDao) {
         this.traineeDao = traineeDao;
     }
-
-    @Override
-    public Trainee createTrainee(Trainee trainee) {
-        logger.info("Creating trainee: {}.{}", trainee.getFirstName(), trainee.getLastName());
-
-        // Initial username calculation without the suffix
-        String baseUsername = trainee.getFirstName() + "." + trainee.getLastName();
-        List<Trainee> existingTrainees = traineeDao.findByFirstNameAndLastNameStartingWith(trainee.getFirstName(), trainee.getLastName());
-
-        // Extracting existing suffixes and finding the next available suffix
-        List<Integer> sortedSuffixes = existingTrainees.stream()
-                .map(t -> {
-                    String username = t.getUsername();
-                    if (username.startsWith(baseUsername)) {
-                        String suffix = username.substring(baseUsername.length());
-                        if (suffix.isEmpty()) {
-                            return 0; // No suffix
-                        } else {
-                            try {
-                                return Integer.parseInt(suffix); // Skip the dot and parse the suffix
-                            } catch (NumberFormatException e) {
-                                return null;
-                            }
-                        }
-                    }
-                    return null;
-                })
-                .filter(Objects::nonNull)
-                .sorted()
-                .toList();
-
-        int suffix = 0;
-        if (!sortedSuffixes.isEmpty()) {
-            suffix = sortedSuffixes.get(sortedSuffixes.size() - 1) + 1; // Increment the highest suffix
-        }
-
-        String finalUsername = baseUsername + (suffix > 0 ? suffix : "");
-        trainee.setUsername(finalUsername);
-        String password = generateRandomPassword();
-        trainee.setPassword(password);
-
-        traineeDao.save(trainee);
-        logger.info("Trainee created with username: {}", finalUsername);
-        return trainee;
-    }
-
-    //Noa.Lee -> Noa.Lee1 -> Noa.Lee2 -> delete Noa.Lee -> add Noa.Lee => Noa.Lee3
-
 
 
     @Override
@@ -117,15 +70,6 @@ public class TraineeServiceImpl implements TraineeService {
     public List<Trainee> getAllTrainees() {
         logger.info("Fetching all trainers");
         return traineeDao.findAll();
-    }
-
-    private String generateRandomPassword() {
-        String chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@#$%";
-        SecureRandom rnd = new SecureRandom();
-        StringBuilder sb = new StringBuilder(10);
-        for (int i = 0; i < 10; i++)
-            sb.append(chars.charAt(rnd.nextInt(chars.length())));
-        return sb.toString();
     }
 }
 
