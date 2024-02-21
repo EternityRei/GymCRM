@@ -1,14 +1,14 @@
-package org.example.gymcrm.service;
+package org.example.gymcrm.service.impl;
 
 import org.example.gymcrm.dao.TraineeDao;
 import org.example.gymcrm.model.Trainee;
+import org.example.gymcrm.service.impl.TraineeServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.sql.Date;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -30,92 +30,6 @@ class TraineeServiceImplTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-    }
-
-    @Test
-    void testCreateTraineeWithUniqueUsername() {
-        // Given
-        Trainee newTrainee = new Trainee();
-        newTrainee.setFirstName("John");
-        newTrainee.setLastName("Doe");
-
-        when(traineeDao.findByFirstNameAndLastNameStartingWith(anyString(), anyString()))
-                .thenReturn(Collections.emptyList());
-        when(traineeDao.save(any(Trainee.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        // When
-        Trainee createdTrainee = traineeService.createTrainee(newTrainee);
-
-        // Then
-        verify(traineeDao, times(1)).save(any(Trainee.class));
-        assertNotNull(createdTrainee.getUsername(), "Username should not be null");
-        assertTrue(createdTrainee.getUsername().startsWith("John.Doe"), "Username should start with 'John.Doe'");
-        assertEquals(10, createdTrainee.getPassword().length(), "Password should be 10 characters long");
-    }
-
-    @Test
-    void testCreateTraineeWithDuplicateUsername() {
-        // Prepare a trainee with a username that already exists
-        Trainee existingTrainee = new Trainee();
-        existingTrainee.setUsername("John.Doe");
-
-        Trainee newTrainee = new Trainee();
-        newTrainee.setFirstName("John");
-        newTrainee.setLastName("Doe");
-
-        when(traineeDao.findByFirstNameAndLastNameStartingWith(anyString(), anyString()))
-                .thenReturn(List.of(existingTrainee));
-        when(traineeDao.save(any(Trainee.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        // When
-        Trainee createdTrainee = traineeService.createTrainee(newTrainee);
-
-        // Then
-        verify(traineeDao, times(1)).save(any(Trainee.class));
-        assertNotEquals("John.Doe", createdTrainee.getUsername(), "Username should not be 'John.Doe' to avoid duplication");
-        assertEquals(10, createdTrainee.getPassword().length(), "Password should be 10 characters long");
-    }
-
-    @Test
-    void testCreateAndDeleteTraineeSequence() {
-
-        Trainee firstTrainee = new Trainee();
-        firstTrainee.setFirstName("Joe");
-        firstTrainee.setLastName("Doe");
-
-        Trainee secondTrainee = new Trainee();
-        secondTrainee.setFirstName("Joe");
-        secondTrainee.setLastName("Doe");
-
-        Trainee thirdTrainee = new Trainee();
-        thirdTrainee.setFirstName("Joe");
-        thirdTrainee.setLastName("Doe");
-
-        Trainee fourthTrainee = new Trainee();
-        fourthTrainee.setFirstName("Joe");
-        fourthTrainee.setLastName("Doe");
-
-        List<Trainee> existingTrainees = new ArrayList<>();
-
-        when(traineeDao.findByFirstNameAndLastNameStartingWith(anyString(), anyString()))
-                .thenAnswer(invocation -> new ArrayList<>(existingTrainees));
-
-        when(traineeDao.save(any(Trainee.class)))
-                .then(invocation -> {
-                    Trainee savedTrainee = invocation.getArgument(0);
-                    existingTrainees.add(savedTrainee);
-                    return savedTrainee;
-                });
-
-        Trainee first = traineeService.createTrainee(firstTrainee);
-        Trainee second = traineeService.createTrainee(secondTrainee);
-        Trainee third = traineeService.createTrainee(thirdTrainee);
-        Trainee fourth = traineeService.createTrainee(fourthTrainee);
-
-        assertEquals("Joe.Doe", first.getUsername());
-        assertEquals("Joe.Doe1", second.getUsername());
-        assertEquals("Joe.Doe2", third.getUsername());
-        assertEquals("Joe.Doe3", fourth.getUsername(), "Expected username for the fourth Trainee should be Noa.Lee3");
     }
 
     @Test

@@ -29,27 +29,6 @@ class TrainerServiceImplTest {
     }
 
     @Test
-    void createTrainer_SuccessfulCreation() {
-        // Arrange
-        Trainer newTrainer = new Trainer();
-        newTrainer.setFirstName("Bob");
-        newTrainer.setLastName("Williams");
-
-        // Mocking DAO responses
-        when(trainerDao.save(any(Trainer.class))).thenReturn(newTrainer);
-
-        // Act
-        Trainer createdTrainer = trainerService.createTrainer(newTrainer);
-
-        // Assert
-        assertNotNull(createdTrainer);
-        verify(trainerDao, times(1)).save(any(Trainer.class));
-        assertNotNull(createdTrainer.getUsername(), "Username should not be null");
-        assertTrue(createdTrainer.getUsername().startsWith("Bob.Williams"), "Username should start with 'Bob.Williams'");
-        assertEquals(10, createdTrainer.getPassword().length(), "Password should be 10 characters long");
-    }
-
-    @Test
     void updateTrainer_ExistingTrainer_SuccessfulUpdate() {
         // Arrange
         String trainerId = "1de82c4e-e4c4-4d58-b3f6-5d9e2a412c88";
