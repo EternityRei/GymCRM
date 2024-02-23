@@ -8,21 +8,32 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.security.SecureRandom;
 import java.util.List;
-import java.util.Objects;
 
 @Service
 public class TraineeServiceImpl implements TraineeService {
 
     private final TraineeDao traineeDao;
+    private final UserCredentialsGeneratorImpl userCredentialsGenerator;
     private static final Logger logger = LoggerFactory.getLogger(TraineeServiceImpl.class);
 
     @Autowired
-    public TraineeServiceImpl(TraineeDao traineeDao) {
+    public TraineeServiceImpl(TraineeDao traineeDao, UserCredentialsGeneratorImpl userCredentialsGenerator) {
         this.traineeDao = traineeDao;
+        this.userCredentialsGenerator = userCredentialsGenerator;
     }
 
+
+    @Override
+    public Trainee createTrainee(Trainee trainee) {
+        String username = userCredentialsGenerator.createUsername(trainee.getFirstName(),trainee.getLastName());
+        String password = userCredentialsGenerator.generateRandomPassword();
+
+        trainee.setUsername(username);
+        trainee.setPassword(password);
+        logger.info("Trainee created with username: {}", username);
+        return traineeDao.save(trainee);
+    }
 
     @Override
     public Trainee updateTrainee(String id, Trainee updatedTrainee) {
@@ -32,7 +43,6 @@ public class TraineeServiceImpl implements TraineeService {
 
             existingTrainee.setFirstName(updatedTrainee.getFirstName());
             existingTrainee.setLastName(updatedTrainee.getLastName());
-            existingTrainee.setUsername(updatedTrainee.getUsername());
             existingTrainee.setPassword(updatedTrainee.getPassword());
             existingTrainee.setActive(updatedTrainee.isActive());
             existingTrainee.setDateOfBirth(updatedTrainee.getDateOfBirth());

@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Repository
 public class UserDaoImpl implements UserDao {
@@ -33,15 +35,14 @@ public class UserDaoImpl implements UserDao {
         }
     }
     @Override
-    public List<User> findUsers(User user) {
-        if (user instanceof Trainer) {
-            trainerDao.findByFirstNameAndLastNameStartingWith(user.getFirstName(), user.getLastName());
-        } else if (user instanceof Trainee) {
-            traineeDao.findByFirstNameAndLastNameStartingWith(user.getFirstName(), user.getLastName());
-        } else {
-            throw new IllegalArgumentException("Invalid user type");
-        }
-        return null;
+    public List<User> findUsers() {
+
+        List<Trainer> trainers = trainerDao.findAll();
+
+        List<Trainee> trainees = traineeDao.findAll();
+
+        return Stream.concat(trainers.stream(), trainees.stream())
+                .toList();
     }
 
     @Override

@@ -8,20 +8,31 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.security.SecureRandom;
 import java.util.List;
-import java.util.Objects;
 
 @Service
 public class TrainerServiceImpl implements TrainerService {
 
     private final TrainerDao trainerDao;
+
+    private final UserCredentialsGeneratorImpl userCredentialsService;
     private static final Logger logger = LoggerFactory.getLogger(TrainerServiceImpl.class);
 
 
     @Autowired
-    public TrainerServiceImpl(TrainerDao trainerDao) {
+    public TrainerServiceImpl(TrainerDao trainerDao, UserCredentialsGeneratorImpl userCredentialsService) {
         this.trainerDao = trainerDao;
+        this.userCredentialsService = userCredentialsService;
+    }
+
+    public Trainer createTrainer(Trainer trainer) {
+        String username = userCredentialsService.createUsername(trainer.getFirstName(),trainer.getLastName());
+        String password = userCredentialsService.generateRandomPassword();
+
+        trainer.setUsername(username);
+        trainer.setPassword(password);
+        logger.info("Trainer created with username: {}", username);
+        return trainerDao.save(trainer);
     }
 
     @Override
@@ -32,7 +43,6 @@ public class TrainerServiceImpl implements TrainerService {
 
             existingTrainer.setFirstName(trainer.getFirstName());
             existingTrainer.setLastName(trainer.getLastName());
-            existingTrainer.setUsername(trainer.getUsername());
             existingTrainer.setPassword(trainer.getPassword());
             existingTrainer.setActive(trainer.isActive());
             existingTrainer.setSpecialization(trainer.getSpecialization());
