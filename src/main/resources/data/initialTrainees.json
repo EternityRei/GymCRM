@@ -8,25 +8,5 @@
     "active": true,
     "dateOfBirth": "1995-04-23",
     "address": "123 Main St, Anytown, Anystate"
-  },
-  {
-    "id": "990aac1f-94d3-475b-ae15-ce41b3087c08",
-    "firstName": "Bob",
-    "lastName": "Smith",
-    "username": "Bob.Smith",
-    "password": "securepass456",
-    "active": false,
-    "dateOfBirth": "1990-07-15",
-    "address": "456 Elm St, Othertown, Otherstate"
-  },
-  {
-    "id": "7d19aff5-5c75-4b9e-9f31-123456789012",
-    "firstName": "Alice",
-    "lastName": "Johnson",
-    "username": "Alice.Johnson",
-    "password": "alicepass789",
-    "active": true,
-    "dateOfBirth": "1992-11-30",
-    "address": "789 Pine St, Somewhere, Somestate"
   }
 ]

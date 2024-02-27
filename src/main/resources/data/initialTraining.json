@@ -27,34 +27,5 @@
     "trainingName": "Cardio Basics",
     "trainingDate": "2024-03-01",
     "trainingDuration": "34"
-  },
-  {
-    "trainingId": "89726452-81a2-4f14-b88e-3ba79e19a0db",
-    "trainer": {
-      "id": "3ca22c2e-9f02-4a3c-814a-2c8c8d5d3317",
-      "firstName": "Alice",
-      "lastName": "Johnson",
-      "username": "Alice.Johnson",
-      "password": "alicej123",
-      "active": true,
-      "specialization": "Strength Training"
-    },
-    "trainee": {
-      "id": "990aac1f-94d3-475b-ae15-ce41b3087c08",
-      "firstName": "Bob",
-      "lastName": "Smith",
-      "username": "Bob.Smith",
-      "password": "securepass",
-      "active": false,
-      "dateOfBirth": "1990-07-15",
-      "address": "456 Elm St"
-    },
-    "trainingType": {
-      "id": "2",
-      "name": "Advanced Stretching"
-    },
-    "trainingName": "Advanced Strength",
-    "trainingDate": "2024-03-15",
-    "trainingDuration": "21"
   }
 ]

@@ -7,23 +7,5 @@
     "password": "johndoe123",
     "active": true,
     "specialization": "Cardio"
-  },
-  {
-    "id": "3ca22c2e-9f02-4a3c-814a-2c8c8d5d3317",
-    "firstName": "Alice",
-    "lastName": "Johnson",
-    "username": "Alice.Johnson1",
-    "password": "alicej123",
-    "active": true,
-    "specialization": "Strength Training"
-  },
-  {
-    "id": "1de82c4e-e4c4-4d58-b3f6-5d9e2a412c88",
-    "firstName": "Bob",
-    "lastName": "Williams",
-    "username": "Bob.Williams",
-    "password": "bobw123",
-    "active": false,
-    "specialization": "Yoga"
   }
 ]
