@@ -1,13 +1,29 @@
 package org.example.gymcrm.model;
 
-public class Trainee extends User{
+import jakarta.persistence.*;
+
+import java.util.UUID;
+
+@Entity
+@Table(name = "trainees")
+public class Trainee {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    @Column(name = "date_of_birth")
+    @Temporal(TemporalType.DATE)
     private String dateOfBirth;
     private String address;
 
-    public Trainee(String id, String firstName, String lastName, String username, String password, boolean isActive, String dateOfBirth, String address) {
-        super(id, firstName, lastName, username, password, isActive);
+    @OneToOne
+    @JoinColumn(name = "user_id", referencedColumnName = "id")
+    private User user;
+
+    public Trainee(Long id, String dateOfBirth, String address, User user) {
+        this.id = id;
         this.dateOfBirth = dateOfBirth;
         this.address = address;
+        this.user = user;
     }
 
     public Trainee(){
@@ -32,14 +48,10 @@ public class Trainee extends User{
     @Override
     public String toString() {
         return "Trainee{" +
-                "id='" + getId() + '\'' +
-                ", firstName='" + getFirstName() + '\'' +
-                ", lastName='" + getLastName() + '\'' +
-                ", username='" + getUsername() + '\'' +
-                ", password='" + getPassword() + '\'' +
-                ", isActive=" + isActive() +
+                "id=" + id +
                 ", dateOfBirth='" + dateOfBirth + '\'' +
                 ", address='" + address + '\'' +
+                ", user=" + user +
                 '}';
     }
 }

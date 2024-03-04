@@ -1,20 +1,42 @@
 package org.example.gymcrm.model;
 
+import jakarta.persistence.*;
+
 import java.time.Duration;
 import java.util.Date;
 import java.util.Objects;
+import java.util.UUID;
 
+@Entity
+@Table(name = "training")
 public class Training {
-    private String trainingId;
-    private Trainer trainer;
-    private Trainee trainee;
-    private TrainingType trainingType;
-    private String trainingName;
-    private Date trainingDate;
-    private long trainingDuration;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    public Training(String trainingId, Trainer trainer, Trainee trainee, TrainingType trainingType, String trainingName, Date trainingDate, long trainingDuration) {
-        this.trainingId = trainingId;
+    @ManyToOne
+    @JoinColumn(name = "trainee_id", referencedColumnName = "id")
+    private Trainee trainee;
+
+    @ManyToOne
+    @JoinColumn(name = "trainer_id", referencedColumnName = "id")
+    private Trainer trainer;
+
+    @Column(name = "training_name", nullable = false)
+    private String trainingName;
+
+    @ManyToOne
+    @JoinColumn(name = "training_type_id", referencedColumnName = "id")
+    private TrainingType trainingType;
+
+    @Column(name = "training_date", nullable = false)
+    private Date trainingDate;
+
+    @Column(name = "training_duration", nullable = false)
+    private Integer trainingDuration;
+
+    public Training(Long id, Trainer trainer, Trainee trainee, TrainingType trainingType, String trainingName, Date trainingDate, Integer trainingDuration) {
+        this.id = id;
         this.trainer = trainer;
         this.trainee = trainee;
         this.trainingType = trainingType;
@@ -27,12 +49,12 @@ public class Training {
 
     }
 
-    public String getTrainingId() {
-        return trainingId;
+    public Long getTrainingId() {
+        return id;
     }
 
-    public void setTrainingId(String trainingId) {
-        this.trainingId = trainingId;
+    public void setTrainingId(Long trainingId) {
+        this.id = trainingId;
     }
 
     public Trainer getTrainer() {
@@ -79,7 +101,7 @@ public class Training {
         return trainingDuration;
     }
 
-    public void setTrainingDuration(long trainingDuration) {
+    public void setTrainingDuration(Integer trainingDuration) {
         this.trainingDuration = trainingDuration;
     }
 
@@ -98,7 +120,7 @@ public class Training {
     @Override
     public String toString() {
         return "Training{" +
-                "trainingId='" + trainingId + '\'' +
+                "id='" + id + '\'' +
                 ", trainer=" + trainer +
                 ", trainee=" + trainee +
                 ", trainingType=" + trainingType +

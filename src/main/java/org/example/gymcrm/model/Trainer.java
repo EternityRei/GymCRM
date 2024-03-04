@@ -1,11 +1,23 @@
 package org.example.gymcrm.model;
 
-public class Trainer extends User{
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "trainers")
+public class Trainer {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
     private String specialization;
 
-    public Trainer(String id, String firstName, String lastName, String username, String password, boolean isActive, String specialization) {
-        super(id, firstName, lastName, username, password, isActive);
+    @OneToOne
+    @JoinColumn(name = "user_id", referencedColumnName = "id")
+    private User user;
+
+    public Trainer(Long id, String specialization, User user) {
+        this.id = id;
         this.specialization = specialization;
+        this.user = user;
     }
 
     public Trainer(){
@@ -23,13 +35,9 @@ public class Trainer extends User{
     @Override
     public String toString() {
         return "Trainer{" +
-                "id='" + getId() + '\'' +
-                ", firstName='" + getFirstName() + '\'' +
-                ", lastName='" + getLastName() + '\'' +
-                ", username='" + getUsername() + '\'' +
-                ", password='" + getPassword() + '\'' +
-                ", isActive=" + isActive() +
+                "id=" + id +
                 ", specialization='" + specialization + '\'' +
+                ", user=" + user +
                 '}';
     }
 }

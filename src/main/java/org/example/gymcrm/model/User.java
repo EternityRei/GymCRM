@@ -1,16 +1,28 @@
 package org.example.gymcrm.model;
 
+import jakarta.persistence.*;
+
 import java.util.Objects;
+import java.util.UUID;
 
+@Entity
+@Table(name = "users")
 public class User {
-    private String id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    @Column(name = "first_name",nullable = false)
     private String firstName;
+    @Column(name = "last_name",nullable = false)
     private String lastName;
+    @Column(nullable = false)
     private String username;
+    @Column(nullable = false)
     private String password;
-    private boolean isActive;
+    @Column(name = "is_active", nullable = false)
+    private Boolean isActive;
 
-    public User(String id, String firstName, String lastName, String username, String password, boolean isActive) {
+    public User(Long id, String firstName, String lastName, String username, String password, boolean isActive) {
         this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -21,14 +33,6 @@ public class User {
 
     public User(){
 
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
     }
 
     public String getFirstName() {
@@ -75,12 +79,12 @@ public class User {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof User user)) return false;
-        return isActive() == user.isActive() && Objects.equals(getId(), user.getId()) && Objects.equals(getFirstName(), user.getFirstName()) && Objects.equals(getLastName(), user.getLastName()) && Objects.equals(getUsername(), user.getUsername()) && Objects.equals(getPassword(), user.getPassword());
+        return Objects.equals(id, user.id) && Objects.equals(getFirstName(), user.getFirstName()) && Objects.equals(getLastName(), user.getLastName()) && Objects.equals(getUsername(), user.getUsername()) && Objects.equals(getPassword(), user.getPassword()) && Objects.equals(isActive, user.isActive);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getFirstName(), getLastName(), getUsername(), getPassword(), isActive());
+        return Objects.hash(id, getFirstName(), getLastName(), getUsername(), getPassword(), isActive);
     }
 
     @Override
