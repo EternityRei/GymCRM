@@ -2,6 +2,7 @@ package org.example.gymcrm.service.impl;
 
 import org.example.gymcrm.dao.TrainerDao;
 import org.example.gymcrm.model.Trainer;
+import org.example.gymcrm.model.User;
 import org.example.gymcrm.service.TrainerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,14 +26,23 @@ public class TrainerServiceImpl implements TrainerService {
         this.userCredentialsService = userCredentialsService;
     }
 
-    public Trainer createTrainer(Trainer trainer) {
-        String username = userCredentialsService.createUsername(trainer.getFirstName(),trainer.getLastName());
+    @Override
+    public Trainer createTrainer(String firstName, String lastName, String specialization) {
+        String username = userCredentialsService.createUsername(firstName, lastName);
         String password = userCredentialsService.generateRandomPassword();
 
-        trainer.setUsername(username);
-        trainer.setPassword(password);
-        logger.info("Trainer created with username: {}", username);
-        return trainerDao.save(trainer);
+        User user = new User();
+        user.setFirstName(firstName);
+        user.setLastName(lastName);
+        user.setUsername(username);
+        user.setPassword(password);
+        user.setActive(true);
+
+        Trainer trainer = new Trainer();
+        trainer.setUser(user);
+        trainer.setSpecialization(specialization);
+
+        return null;
     }
 
     @Override
