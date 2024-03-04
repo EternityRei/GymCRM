@@ -15,12 +15,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class TrainingTypeDaoImplTest {
+public class TrainingTypeRepositoryTest {
     @Mock
     private TrainingTypeStorage trainingTypeStorage;
 
     @InjectMocks
-    private TrainingTypeDaoImpl trainingTypeDao;
+    private TrainingTypeRepository trainingTypeDao;
 
     @BeforeEach
     void setUp() {

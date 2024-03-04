@@ -14,12 +14,12 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
-public class TrainerDaoImplTest {
+public class TrainerRepositoryTest {
     @Mock
     private TrainerStorage trainerStorage;
 
     @InjectMocks
-    private TrainerDaoImpl trainerDao;
+    private TrainerRepository trainerDao;
 
     @BeforeEach
     void setUp() {
