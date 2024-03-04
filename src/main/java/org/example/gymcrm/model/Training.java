@@ -2,10 +2,8 @@ package org.example.gymcrm.model;
 
 import jakarta.persistence.*;
 
-import java.time.Duration;
 import java.util.Date;
 import java.util.Objects;
-import java.util.UUID;
 
 @Entity
 @Table(name = "training")

@@ -2,8 +2,6 @@ package org.example.gymcrm.model;
 
 import jakarta.persistence.*;
 
-import java.util.UUID;
-
 @Entity
 @Table(name = "trainees")
 public class Trainee {
@@ -43,6 +41,10 @@ public class Trainee {
 
     public void setAddress(String address) {
         this.address = address;
+    }
+
+    public User getUser() {
+        return user;
     }
 
     @Override

@@ -2,8 +2,6 @@ package org.example.gymcrm.model;
 
 import jakarta.persistence.*;
 
-import java.util.UUID;
-
 @Entity
 @Table(name = "training_types")
 public class TrainingType {
