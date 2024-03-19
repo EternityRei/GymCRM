@@ -1,6 +1,7 @@
 package org.example.gymcrm.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 
 @Entity
 @Table(name = "training_types")
@@ -8,6 +9,7 @@ public class TrainingType {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     @Column(name = "training_type_name", nullable = false)
     private String name;
 

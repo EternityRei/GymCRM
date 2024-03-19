@@ -27,6 +27,27 @@ dependencies {
     // https://mvnrepository.com/artifact/org.springframework.data/spring-data-jpa
     implementation group: 'org.springframework.data', name: 'spring-data-jpa', version: '3.2.3'
 
+    //Hibernate
+    // https://mvnrepository.com/artifact/org.hibernate.validator/hibernate-validator
+    implementation group: 'org.hibernate.validator', name: 'hibernate-validator', version: '8.0.1.Final'
+
+    //Jakarta Validation
+    // https://mvnrepository.com/artifact/jakarta.validation/jakarta.validation-api
+    implementation group: 'jakarta.validation', name: 'jakarta.validation-api', version: '3.0.2'
+    // https://mvnrepository.com/artifact/org.glassfish/jakarta.el
+    implementation group: 'org.glassfish', name: 'jakarta.el', version: '4.0.2'
+
+
+    //AspectJ
+    // https://mvnrepository.com/artifact/org.aspectj/aspectjweaver
+    runtimeOnly group: 'org.aspectj', name: 'aspectjweaver', version: '1.9.21'
+    // https://mvnrepository.com/artifact/org.aspectj/aspectjrt
+    runtimeOnly group: 'org.aspectj', name: 'aspectjrt', version: '1.9.21'
+    // https://mvnrepository.com/artifact/org.aspectj/aspectjtools
+    implementation group: 'org.aspectj', name: 'aspectjtools', version: '1.9.21'
+    // https://mvnrepository.com/artifact/org.aspectj/aspectjmatcher
+    implementation group: 'org.aspectj', name: 'aspectjmatcher', version: '1.9.21'
+
     // Database
     // https://mvnrepository.com/artifact/org.postgresql/postgresql
     implementation group: 'org.postgresql', name: 'postgresql', version: '42.7.2'

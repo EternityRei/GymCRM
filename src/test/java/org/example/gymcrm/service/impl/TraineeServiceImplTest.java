@@ -1,334 +1,200 @@
 package org.example.gymcrm.service.impl;
 
-import com.fasterxml.jackson.databind.deser.std.UUIDDeserializer;
-import org.example.gymcrm.dao.TraineeDao;
-import org.example.gymcrm.dao.UserDao;
 import org.example.gymcrm.model.Trainee;
+import org.example.gymcrm.model.Trainer;
 import org.example.gymcrm.model.User;
-import org.example.gymcrm.service.impl.TraineeServiceImpl;
-import org.example.gymcrm.storage.TraineeStorage;
-import org.junit.jupiter.api.BeforeEach;
+import org.example.gymcrm.repository.TraineeRepository;
+import org.example.gymcrm.repository.TrainerRepository;
+import org.example.gymcrm.service.ValidationService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.stubbing.Answer;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
-class TraineeServiceImplTest {
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+public class TraineeServiceImplTest {
 
-    private TraineeDao traineeDao;
-    private UserDao userDao;
-    private UserCredentialsGeneratorImpl userCredentialsGenerator;
+    @Mock
+    private UserServiceImpl userCredentialsGenerator;
+
+    @Mock
+    private TraineeRepository traineeRepository;
+    @Mock
+    private TrainerRepository trainerRepository;
+
+    @Mock
+    private ValidationService validationService;
+
+    @InjectMocks
     private TraineeServiceImpl traineeService;
 
-    private List<User> existingUsers;
+    @Test
+    void whenCreateTrainee_thenSuccess() {
+        Trainee inputTrainee = new Trainee();
+        User user = new User();
+        user.setFirstName("John");
+        user.setLastName("Doe");
+        inputTrainee.setUser(user);
 
-    @BeforeEach
-    public void setUp() {
-        traineeDao = Mockito.mock(TraineeDao.class);
-        userDao = Mockito.mock(UserDao.class);
-        userCredentialsGenerator = new UserCredentialsGeneratorImpl(userDao);
+        when(userCredentialsGenerator.createUsername(anyString(), anyString())).thenReturn("johndoe");
+        when(userCredentialsGenerator.generateRandomPassword()).thenReturn("randomPassword");
+        when(traineeRepository.save(any(Trainee.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        traineeService = new TraineeServiceImpl(traineeDao, userCredentialsGenerator);
+        Trainee createdTrainee = traineeService.createTrainee(inputTrainee);
 
-        existingUsers = findAllExistingUsers();
+        assertNotNull(createdTrainee);
+        assertEquals("johndoe", createdTrainee.getUser().getUsername());
+        assertEquals("randomPassword", createdTrainee.getUser().getPassword());
+        verify(validationService, times(1)).validateEntity(any(User.class));
     }
 
     @Test
-    public void testCreateTraineeWithUniqueUsername() {
-        // Given
-        Trainee mockTrainee = new Trainee();
-        mockTrainee.setId(String.valueOf(UUID.randomUUID()));
-        mockTrainee.setFirstName("Jane");
-        mockTrainee.setLastName("Doe");
+    void whenCreateTraineeWithInvalidUser_thenValidationFails() {
+        Trainee inputTrainee = new Trainee();
+        inputTrainee.setUser(new User()); // Assume this User object is invalid
 
+        doThrow(RuntimeException.class).when(validationService).validateEntity(any(User.class));
 
-        // When
-        when(userDao.findUsers()).thenReturn(existingUsers);
-
-        when(traineeDao.save(any(Trainee.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        // Act
-        Trainee resultTrainee = traineeService.createTrainee(mockTrainee);
-
-        // Then
-        assertEquals("Jane.Doe1", resultTrainee.getUsername());
-        verify(traineeDao).save(mockTrainee);
+        assertThrows(RuntimeException.class, () -> traineeService.createTrainee(inputTrainee));
     }
 
     @Test
-    public void testCreateTraineeWithDuplicateUsername() {
-        // Given
-        Trainee mockTrainee = new Trainee();
-        mockTrainee.setId(String.valueOf(UUID.randomUUID()));
-        mockTrainee.setFirstName("John");
-        mockTrainee.setLastName("Smith");
+    void whenGetTraineeByUsernameNotFound_thenEmptyResult() {
+        String username = "nonexistent";
+        when(traineeRepository.findByUsername(username)).thenReturn(Optional.empty());
 
-        // Simulate the scenario where the initial username is taken and a unique one is generated
-        when(userDao.findUsers()).thenReturn(existingUsers);
+        Optional<Trainee> result = traineeService.getTraineeByUsername(username);
 
-        when(traineeDao.save(any(Trainee.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        // Act
-        Trainee resultTrainee = traineeService.createTrainee(mockTrainee);
-
-        // Then
-        verify(traineeDao).save(mockTrainee);
-        assertEquals("John.Smith", resultTrainee.getUsername(), "Expected a unique username with a suffix.");
+        assertFalse(result.isPresent());
     }
 
     @Test
-    void testCreateSequentialTrainees() {
-        // Given
-        Trainee firstTrainee = new Trainee();
-        firstTrainee.setId(String.valueOf(UUID.randomUUID()));
-        firstTrainee.setFirstName("Joe");
-        firstTrainee.setLastName("Doe");
+    void whenUpdateTrainee_thenSuccess() {
+        String traineeId = "1";
+        Trainee existingTrainee = new Trainee();
+        User existingUser = new User();
+        existingUser.setUsername("existingUsername");
+        existingTrainee.setUser(existingUser);
 
-        Trainee secondTrainee = new Trainee();
-        secondTrainee.setId(String.valueOf(UUID.randomUUID()));
-        secondTrainee.setFirstName("Joe");
-        secondTrainee.setLastName("Doe");
+        Trainee updatedTrainee = new Trainee();
+        User updatedUser = new User();
+        updatedUser.setFirstName("NewFirstName");
+        updatedUser.setLastName("NewLastName");
+        updatedTrainee.setUser(updatedUser);
 
-        Trainee thirdTrainee = new Trainee();
-        thirdTrainee.setId(String.valueOf(UUID.randomUUID()));
-        thirdTrainee.setFirstName("Joe");
-        thirdTrainee.setLastName("Doe");
+        when(traineeRepository.findById(Long.valueOf(traineeId))).thenReturn(Optional.of(existingTrainee));
+        when(traineeRepository.save(any(Trainee.class))).thenReturn(existingTrainee);
 
-        Trainee fourthTrainee = new Trainee();
-        fourthTrainee.setId(String.valueOf(UUID.randomUUID()));
-        fourthTrainee.setFirstName("Joe");
-        fourthTrainee.setLastName("Doe");
-
-        when(userDao.findUsers()).thenReturn(existingUsers);
-
-        when(traineeDao.save(any(Trainee.class))).thenAnswer(new Answer<Trainee>() {
-            public Trainee answer(InvocationOnMock invocation) {
-                Object[] args = invocation.getArguments();
-                return (Trainee) args[0];
-            }
-        });
-
-        Trainee first = traineeService.createTrainee(firstTrainee);
-        existingUsers.add(first);
-        Trainee second = traineeService.createTrainee(secondTrainee);
-        existingUsers.add(second);
-        Trainee third = traineeService.createTrainee(thirdTrainee);
-        existingUsers.add(third);
-
-        // Simulate deletion of the third trainee
-        doNothing().when(traineeDao).deleteById(third.getId());
-
-        // Assume deletion of the third trainee's username happens externally, affecting subsequent username generation
-        Trainee fourth = traineeService.createTrainee(fourthTrainee);
-
-        // Then
-        verify(traineeDao, times(4)).save(any(Trainee.class)); // Ensure save was called for each trainee
-
-        assertEquals("Joe.Doe", first.getUsername());
-        assertEquals("Joe.Doe1", second.getUsername());
-        assertEquals("Joe.Doe3", fourth.getUsername(), "Expected username for the fourth Trainee should be Joe.Doe3 after deletion.");
-    }
-
-    @Test
-    void updateTrainee_Successful() {
-        Trainee existingTrainee = new Trainee(
-                "2bc140d7-5873-4a26-ac89-1a131781df18",
-                "Jane",
-                "Doe",
-                "Jane.Doe",
-                "password123",
-                true,
-                "1995-04-23",
-                "123 Main St, Anytown, Anystate");
-
-        Trainee updatedTrainee = new Trainee(
-                "2bc140d7-5873-4a26-ac89-1a131781df18",
-                "Jane",
-                "Doe",
-                "Jane.Doe",
-                "bebebe",
-                true,
-                "1995-04-23",
-                "123 Main St, Anytown, Anystate");
-        when(traineeDao.findById("2bc140d7-5873-4a26-ac89-1a131781df18")).thenReturn(existingTrainee);
-
-        Trainee result = traineeService.updateTrainee("2bc140d7-5873-4a26-ac89-1a131781df18", updatedTrainee);
+        Trainee result = traineeService.updateTrainee(traineeId, updatedTrainee);
 
         assertNotNull(result);
-        assertEquals(updatedTrainee.getFirstName(), result.getFirstName());
-        assertEquals(updatedTrainee.getLastName(), result.getLastName());
-        assertEquals(updatedTrainee.getUsername(), result.getUsername());
-        assertEquals(updatedTrainee.getPassword(), result.getPassword());
-        assertEquals(updatedTrainee.isActive(), result.isActive());
-        assertEquals(updatedTrainee.getDateOfBirth(), result.getDateOfBirth());
-        assertEquals(updatedTrainee.getAddress(), result.getAddress());
-        verify(traineeDao).save(any(Trainee.class));
+        assertEquals("NewFirstName", result.getUser().getFirstName());
+        assertEquals("NewLastName", result.getUser().getLastName());
+
+        // Adjusted to verify the validation of the Trainee object, not just the User object
+        verify(validationService, times(1)).validateEntity(any(Trainee.class));
+    }
+
+
+    @Test
+    void whenDeleteTraineeByUsernameNotFound_thenThrowException() {
+        String username = "unknown";
+        when(traineeRepository.findByUsername(username)).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(RuntimeException.class, () -> traineeService.deleteTraineeByUsername(username));
+        assertTrue(exception.getMessage().contains("Trainee not found"));
+    }
+
+
+    @Test
+    void whenAddTrainersToTrainee_thenSuccess() {
+        String traineeUsername = "traineeUsername";
+        Trainee trainee = new Trainee();
+        trainee.setTrainers(new HashSet<>()); // Assume trainee starts with no trainers
+
+        List<Long> newTrainerIds = Arrays.asList(1L, 2L);
+        Trainer trainer1 = new Trainer();
+        trainer1.setId(1L);
+        Trainer trainer2 = new Trainer();
+        trainer2.setId(2L);
+
+        when(traineeRepository.findByUsername(traineeUsername)).thenReturn(Optional.of(trainee));
+        when(trainerRepository.findById(1L)).thenReturn(Optional.of(trainer1));
+        when(trainerRepository.findById(2L)).thenReturn(Optional.of(trainer2));
+
+        traineeService.addTrainersToTrainee(traineeUsername, newTrainerIds);
+
+        assertEquals(2, trainee.getTrainers().size());
+        assertTrue(trainee.getTrainers().contains(trainer1) && trainee.getTrainers().contains(trainer2));
     }
 
     @Test
-    void updateTrainee_TraineeNotFound() {
-        Trainee updatedTrainee = new Trainee(
-                "id2",
-                "Jane",
-                "Doe",
-                "Jane.Doe",
-                "bebebe",
-                true,
-                "1995-04-23",
-                "123 Main St, Anytown, Anystate");
-        when(traineeDao.findById("id2")).thenReturn(null);
+    void whenDeactivateTraineeProfile_thenSuccess() {
+        String id = "1";
+        doNothing().when(userCredentialsGenerator).banUser(anyString());
 
-        Exception exception = assertThrows(RuntimeException.class, () -> {
-            traineeService.updateTrainee("id2", updatedTrainee);
-        });
+        // Execution
+        traineeService.deactivateTraineeProfile(id);
 
-        String expectedMessage = "Trainee with ID id2 not found.";
-        String actualMessage = exception.getMessage();
-
-        assertTrue(actualMessage.contains(expectedMessage));
+        // Verification
+        verify(userCredentialsGenerator, times(1)).banUser(id);
     }
 
     @Test
-    void deleteTrainee_WhenTraineeExists() {
-        // Arrange
-        String traineeId = "2bc140d7-5873-4a26-ac89-1a131781df18";
-        Trainee existingTrainee = new Trainee(
-                "2bc140d7-5873-4a26-ac89-1a131781df18",
-                "Jane",
-                "Doe",
-                "Jane.Doe",
-                "password123",
-                true,
-                "1995-04-23",
-                "123 Main St, Anytown, Anystate");
-        when(traineeDao.findById(traineeId)).thenReturn(existingTrainee);
+    void whenGetTraineeFound_thenSuccess() {
+        Long id = 1L;
+        Trainee expectedTrainee = new Trainee();
+        expectedTrainee.setId(id);
 
-        // Act
-        traineeService.deleteTrainee(traineeId);
+        when(traineeRepository.findById(id)).thenReturn(Optional.of(expectedTrainee));
 
-        // Assert
-        verify(traineeDao, times(1)).deleteById(traineeId);
+        Optional<Trainee> result = traineeService.getTrainee(String.valueOf(id));
+
+        assertTrue(result.isPresent());
+        assertEquals(expectedTrainee, result.get());
     }
 
     @Test
-    void deleteTrainee_WhenTraineeDoesNotExist_ThrowsException() {
-        // Arrange
-        String nonExistingId = "nonExistingId";
-        when(traineeDao.findById(nonExistingId)).thenReturn(null);
+    void whenGetTraineeNotFound_thenEmptyOptional() {
+        Long id = 1L;
+        when(traineeRepository.findById(id)).thenReturn(Optional.empty());
 
-        // Act & Assert
-        assertThrows(RuntimeException.class, () -> traineeService.deleteTrainee(nonExistingId));
+        Optional<Trainee> result = traineeService.getTrainee(String.valueOf(id));
 
-        verify(traineeDao, never()).deleteById(anyString());
+        assertFalse(result.isPresent());
+    }
+
+
+    @Test
+    void whenGetAllTrainees_thenSuccess() {
+        List<Trainee> expectedTrainees = Arrays.asList(new Trainee(), new Trainee());
+        when(traineeRepository.findAll()).thenReturn(expectedTrainees);
+
+        List<Trainee> result = traineeService.getAllTrainees();
+
+        assertNotNull(result);
+        assertEquals(expectedTrainees.size(), result.size());
     }
 
     @Test
-    void getTrainee_ReturnsCorrectTrainee_WhenTraineeExists() {
-        // Arrange
-        String traineeId = "2bc140d7-5873-4a26-ac89-1a131781df18";
-        Trainee expectedTrainee = new Trainee(
-                "2bc140d7-5873-4a26-ac89-1a131781df18",
-                "Jane",
-                "Doe",
-                "Jane.Doe",
-                "password123",
-                true,
-                "1995-04-23",
-                "123 Main St, Anytown, Anystate");
-        when(traineeDao.findById(traineeId)).thenReturn(expectedTrainee);
+    void whenDeleteTraineeWithInvalidId_thenThrowException() {
+        doThrow(new RuntimeException("Database error")).when(traineeRepository).deleteById(anyLong());
 
-        // Act
-        Trainee actualTrainee = traineeService.getTrainee(traineeId);
-
-        // Assert
-        assertEquals(expectedTrainee, actualTrainee, "The returned trainee should match the expected one.");
+        assertThrows(RuntimeException.class, () -> traineeService.deleteTrainee("999"));
     }
 
-    @Test
-    void getAllTrainees_ReturnsListOfTrainees_WhenTraineesExist() {
-        Trainee trainee1 = new Trainee(
-                "2bc140d7-5873-4a26-ac89-1a131781df18",
-                "Jane",
-                "Doe",
-                "Jane.Doe",
-                "password123",
-                true,
-                "1995-04-23",
-                "123 Main St, Anytown, Anystate");
-
-        Trainee trainee2 = new Trainee(
-                "990aac1f-94d3-475b-ae15-ce41b3087c08",
-                "Bob",
-                "Smith",
-                "Bob.Smith",
-                "securepass456",
-                false,
-                "1990-07-15",
-                "456 Elm St, Othertown, Otherstate");
-        // Arrange
-        List<Trainee> expectedTrainees = Arrays.asList(new Trainee(), new Trainee()); // Assuming a list of trainees
-        when(traineeDao.findAll()).thenReturn(expectedTrainees);
-
-        // Act
-        List<Trainee> actualTrainees = traineeService.getAllTrainees();
-
-        // Assert
-        assertFalse(actualTrainees.isEmpty(), "The returned list should not be empty.");
-        assertEquals(expectedTrainees.size(), actualTrainees.size(), "The size of the returned list should match the expected list.");
-        assertEquals(expectedTrainees, actualTrainees, "The returned list should match the expected list.");
-    }
-
-    private List<User> findAllExistingUsers(){
-        Trainee firstTrainee = new Trainee();
-        firstTrainee.setId("2bc140d7-5873-4a26-ac89-1a131781df18");
-        firstTrainee.setFirstName("Jane");
-        firstTrainee.setLastName("Doe");
-        firstTrainee.setUsername("Jane.Doe");
-        firstTrainee.setPassword("password123");
-        firstTrainee.setActive(true);
-        firstTrainee.setDateOfBirth("1995-04-23");
-        firstTrainee.setAddress("123 Main St, Anytown, Anystate");
-
-        Trainee secondTrainee = new Trainee();
-        secondTrainee.setId("990aac1f-94d3-475b-ae15-ce41b3087c08");
-        secondTrainee.setFirstName("Bob");
-        secondTrainee.setLastName("Smith");
-        secondTrainee.setUsername("Bob.Smith");
-        secondTrainee.setPassword("securepass456");
-        secondTrainee.setActive(false);
-        secondTrainee.setDateOfBirth("1990-07-15");
-        secondTrainee.setAddress("456 Elm St, Othertown, Otherstate");
-
-        Trainee thirdTrainee = new Trainee();
-        thirdTrainee.setId("3bc140d7-5873-4a26-ac89-1a131781df18");
-        thirdTrainee.setFirstName("Alice");
-        thirdTrainee.setLastName("Johnson");
-        thirdTrainee.setUsername("Alice.Johnson");
-        thirdTrainee.setPassword("pass123");
-        thirdTrainee.setActive(true);
-        thirdTrainee.setDateOfBirth("1998-09-10");
-        thirdTrainee.setAddress("789 Oak St, Somewhere, Anotherstate");
-
-        List<User> existingUsers = new ArrayList<>();
-        existingUsers.add(firstTrainee);
-        existingUsers.add(secondTrainee);
-        existingUsers.add(thirdTrainee);
-
-        return existingUsers;
-    }
 
 }

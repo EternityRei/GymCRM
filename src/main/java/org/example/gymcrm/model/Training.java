@@ -1,6 +1,9 @@
 package org.example.gymcrm.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 import java.util.Date;
 import java.util.Objects;
@@ -12,24 +15,31 @@ public class Training {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotNull
     @ManyToOne
     @JoinColumn(name = "trainee_id", referencedColumnName = "id")
     private Trainee trainee;
 
+    @NotNull
     @ManyToOne
     @JoinColumn(name = "trainer_id", referencedColumnName = "id")
     private Trainer trainer;
 
+    @NotBlank(message = "Training name is a mandatory field")
+    @Size(min = 2, message = "Min training name length is 2 characters")
     @Column(name = "training_name", nullable = false)
     private String trainingName;
 
+    @NotNull
     @ManyToOne
     @JoinColumn(name = "training_type_id", referencedColumnName = "id")
     private TrainingType trainingType;
 
+    @NotNull(message = "Training date is a mandatory field")
     @Column(name = "training_date", nullable = false)
     private Date trainingDate;
 
+    @NotNull(message = "Training duration is a mandatory field")
     @Column(name = "training_duration", nullable = false)
     private Integer trainingDuration;
 

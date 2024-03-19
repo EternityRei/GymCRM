@@ -1,64 +1,96 @@
 package org.example.gymcrm.service.impl;
 
-import org.example.gymcrm.dao.TrainingTypeDao;
-import org.example.gymcrm.dao.UserDao;
-import org.example.gymcrm.model.Trainee;
-import org.example.gymcrm.model.Trainer;
-import org.example.gymcrm.model.Training;
 import org.example.gymcrm.model.TrainingType;
-import org.junit.jupiter.api.BeforeEach;
+import org.example.gymcrm.repository.TrainingTypeRepository;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.sql.Date;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-public class TrainingTypeServiceImplTest {
+@ExtendWith(MockitoExtension.class)
+class TrainingTypeServiceImplTest {
+
     @Mock
-    private TrainingTypeDao trainingTypeDao;
+    private TrainingTypeRepository trainingTypeRepository;
 
     @InjectMocks
     private TrainingTypeServiceImpl trainingTypeService;
 
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
+    @Test
+    void whenFindById_thenSuccess() {
+        Long id = 1L;
+        Optional<TrainingType> expectedTrainingType = Optional.of(new TrainingType(id, "Strength"));
+        when(trainingTypeRepository.findById(id)).thenReturn(expectedTrainingType);
+
+        Optional<TrainingType> result = trainingTypeService.findById(String.valueOf(id));
+
+        assertTrue(result.isPresent());
+        assertEquals("Strength", result.get().getName());
     }
 
     @Test
-    void getTrainingType_ReturnsCorrectTraining() {
-        // Arrange
-        String id = "2";
+    void whenFindByIdAndTrainingTypeNotFound_thenEmptyOptional() {
+        Long id = 99L; // Assuming no TrainingType with this ID exists
+        when(trainingTypeRepository.findById(id)).thenReturn(Optional.empty());
 
-        TrainingType expectedTrainingType = new TrainingType("2", "Advanced Stretching");
+        Optional<TrainingType> result = trainingTypeService.findById(String.valueOf(id));
 
-        when(trainingTypeDao.findById(id)).thenReturn(expectedTrainingType);
-
-        // Act
-        TrainingType actualTrainingType = trainingTypeService.findById(id);
-
-        // Assert
-        assertEquals(expectedTrainingType, actualTrainingType);
+        assertFalse(result.isPresent());
     }
 
     @Test
-    void getAllTrainings_ReturnsAllTrainings() {
-        // Arrange
-        List<TrainingType> expectedTrainingTypes = Arrays.asList(new TrainingType(), new TrainingType());
-        when(trainingTypeDao.findAll()).thenReturn(expectedTrainingTypes);
+    void whenFindAll_thenSuccess() {
+        List<TrainingType> expectedTrainingTypes = List.of(
+                new TrainingType(1L, "Strength"),
+                new TrainingType(2L, "Cardio")
+        );
+        when(trainingTypeRepository.findAll()).thenReturn(expectedTrainingTypes);
 
-        // Act
-        List<TrainingType> actualTrainings = trainingTypeService.findAll();
+        List<TrainingType> result = trainingTypeService.findAll();
 
-        // Assert
-        assertFalse(actualTrainings.isEmpty(), "Expected non-empty list of trainings");
-        assertEquals(expectedTrainingTypes.size(), actualTrainings.size(), "Expected list sizes to match");
+        assertNotNull(result);
+        assertEquals(2, result.size());
+        assertEquals("Strength", result.get(0).getName());
+        assertEquals("Cardio", result.get(1).getName());
     }
+
+    @Test
+    void whenFindAllAndNoTrainingTypesExist_thenEmptyList() {
+        when(trainingTypeRepository.findAll()).thenReturn(List.of());
+
+        List<TrainingType> result = trainingTypeService.findAll();
+
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void whenFindByIdWithInvalidIdFormat_thenHandleErrorGracefully() {
+        String invalidId = "invalid";
+
+        assertThrows(NumberFormatException.class, () -> trainingTypeService.findById(invalidId));
+        verify(trainingTypeRepository, never()).findById(anyLong());
+    }
+
+    @Test
+    void whenRepositoryThrowsException_thenServiceHandlesItGracefully() {
+        when(trainingTypeRepository.findAll()).thenThrow(new RuntimeException("Database error"));
+
+        Exception exception = assertThrows(RuntimeException.class, () -> trainingTypeService.findAll());
+        assertEquals("Database error", exception.getMessage());
+    }
+
+    @Test
+    void whenFindByIdWithNullId_thenHandleGracefully() {
+        assertThrows(IllegalArgumentException.class, () -> trainingTypeService.findById(null));
+        verify(trainingTypeRepository, never()).findById(anyLong());
+    }
+
 }

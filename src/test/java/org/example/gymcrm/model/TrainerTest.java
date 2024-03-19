@@ -1,33 +1,53 @@
 package org.example.gymcrm.model;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TrainerTest {
+    private Trainer trainer;
+    private User user;
+
+    @BeforeEach
+    void setUp() {
+        user = new User(); // Assuming User is another entity class like Trainer
+        user.setId(1L);
+        trainer = new Trainer(1L, "Fitness", user);
+    }
+
     @Test
-    void testConstructorWithParameters() {
-        Trainer trainer = new Trainer("1", "John", "Doe", "johnDoe", "pass123", true, "Fitness");
-        assertEquals("1", trainer.getId());
-        assertEquals("John", trainer.getFirstName());
-        assertEquals("Doe", trainer.getLastName());
-        assertEquals("johnDoe", trainer.getUsername());
-        assertEquals("pass123", trainer.getPassword());
-        assertEquals(true, trainer.isActive());
+    void getId_ReturnsCorrectId() {
+        assertEquals(1L, trainer.getId());
+    }
+
+    @Test
+    void getSpecialization_ReturnsCorrectSpecialization() {
         assertEquals("Fitness", trainer.getSpecialization());
     }
 
     @Test
-    void testSetSpecialization() {
-        Trainer trainer = new Trainer();
+    void getUser_ReturnsCorrectUser() {
+        assertEquals(user, trainer.getUser());
+    }
+
+    @Test
+    void setSpecialization_SetsCorrectSpecialization() {
         trainer.setSpecialization("Yoga");
         assertEquals("Yoga", trainer.getSpecialization());
     }
 
     @Test
-    void testToString() {
-        Trainer trainer = new Trainer("1", "John", "Doe", "johnDoe", "pass123", true, "Fitness");
-        String expectedToString = "Trainer{id='1', firstName='John', lastName='Doe', username='johnDoe', password='pass123', isActive=true, specialization='Fitness'}";
-        assertEquals(expectedToString, trainer.toString());
+    void testEquals_Symmetric() {
+        Trainer anotherTrainer = new Trainer(1L, "Fitness", user);
+        assertTrue(trainer.equals(anotherTrainer) && anotherTrainer.equals(trainer));
+        assertEquals(trainer.hashCode(), anotherTrainer.hashCode());
+    }
+
+    @Test
+    void testToString_ContainsRelevantInfo() {
+        String toStringResult = trainer.toString();
+        assertTrue(toStringResult.contains("Fitness") && toStringResult.contains(user.toString()));
     }
 }

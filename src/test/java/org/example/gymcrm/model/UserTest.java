@@ -10,51 +10,59 @@ public class UserTest {
 
     @BeforeEach
     void setUp() {
-        user = new User("1", "John", "Doe", "john.doe", "password123", true);
+        user = new User(1L, "John", "Doe", "johndoe", "password123", true);
     }
 
     @Test
-    void testUserConstructorAndProperties() {
-        assertEquals("1", user.getId());
-        assertEquals("John", user.getFirstName());
-        assertEquals("Doe", user.getLastName());
-        assertEquals("john.doe", user.getUsername());
-        assertEquals("password123", user.getPassword());
+    void getId_ReturnsCorrectId() {
+        assertEquals(1L, user.getId());
+    }
+
+    @Test
+    void getAndSetFirstName() {
+        user.setFirstName("Jane");
+        assertEquals("Jane", user.getFirstName());
+    }
+
+    @Test
+    void getAndSetLastName() {
+        user.setLastName("Smith");
+        assertEquals("Smith", user.getLastName());
+    }
+
+    @Test
+    void getAndSetUsername() {
+        user.setUsername("janesmith");
+        assertEquals("janesmith", user.getUsername());
+    }
+
+    @Test
+    void getAndSetPassword() {
+        user.setPassword("newpassword");
+        assertEquals("newpassword", user.getPassword());
+    }
+
+    @Test
+    void isActive_ReturnsTrue() {
         assertTrue(user.isActive());
     }
 
     @Test
-    void testSettersAndGetters() {
-        user.setId("2");
-        user.setFirstName("Jane");
-        user.setLastName("Smith");
-        user.setUsername("jane.smith");
-        user.setPassword("secret");
+    void setActive_SetsCorrectly() {
         user.setActive(false);
-
-        assertEquals("2", user.getId());
-        assertEquals("Jane", user.getFirstName());
-        assertEquals("Smith", user.getLastName());
-        assertEquals("jane.smith", user.getUsername());
-        assertEquals("secret", user.getPassword());
         assertFalse(user.isActive());
     }
 
     @Test
-    void testEquals() {
-        User anotherUser = new User("1", "John", "Doe", "john.doe", "password123", true);
-        assertEquals(user, anotherUser);
-    }
-
-    @Test
-    void testHashCode() {
-        User anotherUser = new User("1", "John", "Doe", "john.doe", "password123", true);
+    void testEquals_Symmetric() {
+        User anotherUser = new User(1L, "John", "Doe", "johndoe", "password123", true);
+        assertTrue(user.equals(anotherUser) && anotherUser.equals(user));
         assertEquals(user.hashCode(), anotherUser.hashCode());
     }
 
     @Test
-    void testToString() {
-        String expected = "User{id='1', firstName='John', lastName='Doe', username='john.doe', password='password123', isActive=true}";
-        assertEquals(expected, user.toString());
+    void testToString_ContainsRelevantInfo() {
+        String toStringResult = user.toString();
+        assertTrue(toStringResult.contains("John") && toStringResult.contains("Doe") && toStringResult.contains("johndoe"));
     }
 }
