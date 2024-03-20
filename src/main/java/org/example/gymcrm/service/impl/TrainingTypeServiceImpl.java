@@ -27,13 +27,25 @@ public class TrainingTypeServiceImpl implements TrainingTypeService {
 
     @Override
     public Optional<TrainingType> findById(String id) {
-        logger.info("Fetching training type with ID: {}", id);
-        return trainingTypeRepository.findById(Long.valueOf(id));
+        logger.debug("Attempting to fetch training type with ID: {}", id);
+        Optional<TrainingType> trainingType = trainingTypeRepository.findById(Long.valueOf(id));
+        if (trainingType.isPresent()) {
+            logger.info("Training type found with ID: {}", id);
+        } else {
+            logger.warn("No training type found with ID: {}", id);
+        }
+        return trainingType;
     }
 
     @Override
     public List<TrainingType> findAll() {
-        logger.info("Fetching all training types.");
-        return trainingTypeRepository.findAll();
+        logger.debug("Fetching all training types.");
+        List<TrainingType> trainingTypes = trainingTypeRepository.findAll();
+        if (trainingTypes.isEmpty()) {
+            logger.info("No training types found.");
+        } else {
+            logger.info("Found {} training types", trainingTypes.size());
+        }
+        return trainingTypes;
     }
 }

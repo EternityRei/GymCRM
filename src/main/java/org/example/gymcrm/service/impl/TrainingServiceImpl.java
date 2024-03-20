@@ -1,7 +1,5 @@
 package org.example.gymcrm.service.impl;
 
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.Validator;
 import org.example.gymcrm.annotation.Authenticate;
 import org.example.gymcrm.model.Training;
 import org.example.gymcrm.repository.TrainingRepository;
@@ -17,7 +15,6 @@ import org.springframework.stereotype.Service;
 import java.sql.Date;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 @Service
 @Authenticate
@@ -37,33 +34,82 @@ public class TrainingServiceImpl implements TrainingService {
 
     @Override
     public Training createTraining(Training training) {
-        logger.info("Attempting to create training");
+        logger.debug("Attempting to create training");
 
-        // Validate the training entity
+        logger.debug("Validating the training entity");
         validationService.validateEntity(training);
+        logger.debug("Saving the training entity: {}", training.toString());
 
-        // Assuming ID is generated, no need to check if it already exists as in the original method
         trainingRepository.save(training);
-        logger.info("Training created successfully.");
+        logger.info("Training created successfully with ID: {}", training.getTrainingId());
         return training;
     }
 
     @Override
     public Optional<Training> getTraining(String id) {
-        logger.info("Fetching training with ID: {}", id);
-        return trainingRepository.findById(Long.valueOf(id));
+        logger.debug("Attempting to fetch training with ID: {}", id);
+
+        Optional<Training> training = trainingRepository.findById(Long.valueOf(id));
+        if (training.isPresent()) {
+            logger.info("Training found with ID: {}", id);
+        } else {
+            logger.warn("No training found with ID: {}", id);
+        }
+
+        return training;
     }
+
 
     @Override
     public List<Training> getAllTrainings() {
-        logger.info("Fetching all trainings.");
-        return trainingRepository.findAll();
+        logger.debug("Fetching all trainings.");
+
+        List<Training> trainings = trainingRepository.findAll();
+        if (trainings.isEmpty()) {
+            logger.info("No trainings found.");
+        } else {
+            logger.info("Found {} trainings.", trainings.size());
+        }
+
+        return trainings;
     }
 
     @Override
     public List<Training> findTrainings(String traineeUsername, String trainerUsername, Date start, Date end, String trainerName, String traineeName, String trainingType) {
-        Specification<Training> spec = TrainingSpecification.byCriteria(traineeUsername, trainerUsername, start, end, trainerName, traineeName, trainingType);
-        return trainingRepository.findAll(spec);
+        logger.debug("Attempting to find trainings with criteria - TraineeUsername: {}, " +
+                        "TrainerUsername: {}, " +
+                        "StartDate: {}," +
+                        " EndDate: {}," +
+                        " TrainerName: {}," +
+                        " TraineeName: {}, " +
+                        "TrainingType: {}",
+                traineeUsername,
+                trainerUsername,
+                start,
+                end,
+                trainerName,
+                traineeName,
+                trainingType);
+
+        Specification<Training> spec = TrainingSpecification
+                .byCriteria(traineeUsername,
+                        trainerUsername,
+                        start,
+                        end,
+                        trainerName,
+                        traineeName,
+                        trainingType);
+
+        List<Training> trainings = trainingRepository.findAll(spec);
+
+        if (trainings.isEmpty()) {
+            logger.info("No trainings found matching the specified criteria.");
+        } else {
+            logger.info("Found {} trainings matching the specified criteria.", trainings.size());
+        }
+
+        return trainings;
     }
+
 }
 

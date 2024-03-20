@@ -51,6 +51,10 @@ public class Trainee {
     public Trainee(){
     }
 
+    public Long getId() {
+        return id;
+    }
+
     public String getDateOfBirth() {
         return dateOfBirth;
     }

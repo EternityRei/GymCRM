@@ -15,6 +15,7 @@ import java.security.SecureRandom;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -32,13 +33,15 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public String createUsername(String firstname, String lastname) {
-        logger.info("Creating user: {}.{}", firstname, lastname);
+        logger.debug("Creating username for user with first name: {} and last name: {}", firstname, lastname);
 
-        // Initial username calculation without the suffix
         String baseUsername = firstname + "." + lastname;
+        String finalUsername = getFinalUsername(baseUsername);
 
-        return getFinalUsername(baseUsername);
+        logger.info("Generated username: {}", finalUsername);
+        return finalUsername;
     }
+
 
     @Override
     public void updatePassword(String id, String newPassword) {
@@ -69,22 +72,24 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void banUser(String id) {
+    public boolean banUser(String id) {
         logger.info("Changing account status for user with id={}", id);
         User user = userRepository.findById(Long.valueOf(id)).orElseThrow(() -> new RuntimeException("User not found"));
         user.setActive(!user.isActive());
+        return user.isActive();
     }
 
     private String getFinalUsername(String baseUsername) {
-        // Extracting existing suffixes and finding the next available suffix
+        logger.debug("Determining final username for base: {}", baseUsername);
+
         List<Integer> sortedSuffixes = extractSuffixes(baseUsername);
-
-        //Calculate suffix
         int suffix = calculateSuffix(sortedSuffixes);
+        String finalUsername = baseUsername + (suffix > 0 ? Integer.toString(suffix) : "");
 
-        // Apply the suffix to the username if necessary and get a final username
-        return baseUsername + (suffix > 0 ? suffix : "");
+        logger.debug("Final username determined as: {}", finalUsername);
+        return finalUsername;
     }
+
 
     public String generateRandomPassword() {
         String chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@#$%";
@@ -96,24 +101,32 @@ public class UserServiceImpl implements UserService {
     }
 
     private List<Integer> extractSuffixes(String baseUsername) {
+        logger.debug("Extracting suffixes for base username: {}", baseUsername);
+
         List<User> existingUsers = userRepository.findAll();
-        return existingUsers.stream()
-               .map(u -> findExistedSuffixes(baseUsername, u))
-               .filter(Objects::nonNull)
-               .sorted()
-               .toList();
+        List<Integer> suffixes = existingUsers.stream()
+                .map(u -> findExistedSuffixes(baseUsername, u))
+                .filter(Objects::nonNull)
+                .sorted()
+                .collect(Collectors.toList());
+
+        logger.debug("Extracted {} suffixes for base username: {}", suffixes.size(), baseUsername);
+        return suffixes;
     }
+
 
     private Integer findExistedSuffixes(String baseUsername, User u) {
         String username = u.getUsername();
         if (username.startsWith(baseUsername)) {
             String suffix = username.substring(baseUsername.length());
             if (suffix.isEmpty()) {
-                return 0;
+                return 0; // No suffix implies the base username itself is in use
             } else {
                 try {
                     return Integer.parseInt(suffix);
                 } catch (NumberFormatException e) {
+                    // This could log potentially large numbers of errors if non-numeric suffixes are common
+                    logger.debug("Non-numeric suffix encountered for username: {} with suffix: {}", username, suffix);
                     return null;
                 }
             }
@@ -121,11 +134,12 @@ public class UserServiceImpl implements UserService {
         return null;
     }
 
+
     private int calculateSuffix(List<Integer> sortedSuffixes) {
-        int suffix = 0; // Start with 0 for the suffix, implying no suffix initially
-        if (!sortedSuffixes.isEmpty()) {
-            suffix = sortedSuffixes.get(sortedSuffixes.size() - 1) + 1; // Increment the highest suffix
-        }
+        int suffix = sortedSuffixes.isEmpty() ? 0 : sortedSuffixes.get(sortedSuffixes.size() - 1) + 1;
+
+        logger.debug("Calculated suffix: {}", suffix);
         return suffix;
     }
+
 }

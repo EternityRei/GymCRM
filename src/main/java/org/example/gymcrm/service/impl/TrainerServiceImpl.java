@@ -1,5 +1,6 @@
 package org.example.gymcrm.service.impl;
 
+import jakarta.persistence.EntityNotFoundException;
 import org.example.gymcrm.annotation.Authenticate;
 import org.example.gymcrm.model.Trainer;
 import org.example.gymcrm.model.Training;
@@ -12,7 +13,6 @@ import org.example.gymcrm.specification.TrainingSpecification;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.sql.Date;
@@ -40,6 +40,8 @@ public class TrainerServiceImpl implements TrainerService {
 
     @Override
     public Trainer createTrainer(String firstName, String lastName, String specialization) {
+        logger.debug("Creating trainer with name: {} {}, specialization: {}", firstName, lastName, specialization);
+
         String username = userCredentialsService.createUsername(firstName, lastName);
         String password = userCredentialsService.generateRandomPassword();
 
@@ -50,44 +52,76 @@ public class TrainerServiceImpl implements TrainerService {
         user.setPassword(password);
         user.setActive(true);
 
+        logger.debug("Validating user={}", user);
         validationService.validateEntity(user);
 
         Trainer trainer = new Trainer();
         trainer.setUser(user);
         trainer.setSpecialization(specialization);
 
+        logger.debug("Validating created trainer={}", trainer);
         validationService.validateEntity(trainer);
+
+        logger.info("Trainer={} was created successfully", trainer);
+        trainerRepository.save(trainer);
 
         return trainer;
     }
 
     @Override
     @Authenticate
-    public Trainer updateTrainer(String id, Trainer trainer) {
-        logger.info("Updating trainer with ID: {}", id);
-        Trainer existingTrainer = trainerRepository.findById(Long.valueOf(id)).orElseThrow();
-        initCredentials(trainer, existingTrainer);
+    public Trainer updateTrainer(String id, Trainer updatedTrainer) {
+        logger.debug("Attempting to update trainer with ID: {}", id);
 
-        validationService.validateEntity(existingTrainer);
+        Trainer existingTrainer = trainerRepository.findById(Long.valueOf(id))
+                .orElseThrow(() -> new EntityNotFoundException("Trainer not found with ID: " + id));
+        logger.debug("Trainer found with ID: {}. Proceeding with update.", id);
 
-        trainerRepository.save(existingTrainer);
-        logger.info("Trainer with ID: {} updated successfully", id);
+        initCredentials(updatedTrainer, existingTrainer);
+        logger.debug("Credentials initialized for trainer with ID: {}", id);
+
+        try {
+            validationService.validateEntity(existingTrainer);
+            trainerRepository.save(existingTrainer);
+            logger.info("Trainer with ID: {} updated successfully.", id);
+        } catch (Exception e) {
+            logger.error("Failed to update trainer with ID: {}. Error: {}", id, e.getMessage());
+        }
+
         return existingTrainer;
     }
+
 
     @Override
     @Authenticate
     public void updateTrainerPassword(String id, String newPassword) {
-        logger.info("Updating trainer password");
-        userCredentialsService.updatePassword(id, newPassword);
+        logger.debug("Attempting to update password for trainer with ID: {}", id);
+        try {
+            userCredentialsService.updatePassword(id, newPassword);
+            logger.info("Password for trainer with ID: {} updated successfully.", id);
+        } catch (Exception e) {
+            logger.error("Failed to update password for trainer with ID: {}. Error: {}", id, e.getMessage());
+        }
     }
+
 
     @Override
     @Authenticate
     public void deactivateTrainerProfile(String id) {
-        logger.info("Changing trainer account status");
-        userCredentialsService.banUser(id);
+        logger.debug("Attempting to deactivate trainer profile for ID: {}", id);
+
+        try {
+            boolean isDeactivated = userCredentialsService.banUser(id);
+            if (isDeactivated) {
+                logger.info("Trainer profile successfully deactivated for ID: {}", id);
+            } else {
+                logger.info("Trainer profile successfully activated for ID: {}", id);
+            }
+        } catch (Exception e) {
+            logger.error("Error deactivating trainer profile for ID: {}", id, e);
+        }
     }
+
 
     private void initCredentials(Trainer trainer, Trainer existingTrainer) {
         existingTrainer.getUser().setFirstName(trainer.getUser().getFirstName());
@@ -99,35 +133,80 @@ public class TrainerServiceImpl implements TrainerService {
     @Override
     @Authenticate
     public Optional<Trainer> getTrainer(String id) {
-        logger.info("Fetching trainer with ID: {}", id);
-        return trainerRepository.findById(Long.valueOf(id));
+        logger.debug("Attempting to fetch trainer with ID: {}", id);
+        Optional<Trainer> trainer = trainerRepository.findById(Long.valueOf(id));
+        if (trainer.isPresent()) {
+            logger.info("Trainer found with ID: {}", id);
+        } else {
+            logger.warn("No trainer found with ID: {}", id);
+        }
+        return trainer;
     }
+
 
     @Override
     @Authenticate
     public Optional<Trainer> getTrainerByUsername(String username) {
-        logger.info("Fetching trainer by username={}", username);
-        return trainerRepository.findByUsername(username);
+        logger.debug("Attempting to fetch trainer by username: {}", username);
+        Optional<Trainer> trainer = trainerRepository.findByUsername(username);
+        if (trainer.isPresent()) {
+            logger.info("Trainer found with username: {}", username);
+        } else {
+            logger.warn("No trainer found with username: {}", username);
+        }
+        return trainer;
     }
 
     @Override
     @Authenticate
     public List<Trainer> getAllTrainers() {
-        logger.info("Fetching all trainers");
-        return trainerRepository.findAll();
+        logger.debug("Fetching all trainers");
+        List<Trainer> trainers = trainerRepository.findAll();
+        logger.info("Found {} trainers", trainers.size());
+        return trainers;
     }
+
 
     @Override
     @Authenticate
     public List<Training> getTrainerTrainings(String trainerUsername, Date from, Date to, String traineeName) {
-        Specification<Training> spec = TrainingSpecification.byCriteria(null, trainerUsername, from, to, null, traineeName, null);
-        return trainingRepository.findAll(spec);
+        logger.info("Fetching trainings for " +
+                "trainer: {}, " +
+                "from: {}," +
+                " to: {}," +
+                " traineeName: {}",
+                trainerUsername,
+                from,
+                to,
+                traineeName
+        );
+
+        List<Training> trainings = trainingRepository
+                .findAll(
+                        TrainingSpecification
+                                .byCriteria(
+                                        null,
+                                        trainerUsername,
+                                        from,
+                                        to,
+                                        null,
+                                        traineeName,
+                                        null
+                                )
+                );
+
+        logger.debug("Found {} trainings for trainerUsername: {}", trainings.size(), trainerUsername);
+        return trainings;
     }
+
 
     @Override
     @Authenticate
     public List<Trainer> getTrainersNotAssignedToTraineeByUsername(String username) {
-        return trainerRepository.findTrainersNotAssignedToTraineeByUsername(username);
+        logger.debug("Fetching trainers not assigned to trainee with username: {}", username);
+        List<Trainer> trainers = trainerRepository.findTrainersNotAssignedToTraineeByUsername(username);
+        logger.info("Found {} trainers not assigned to trainee with username: {}", trainers.size(), username);
+        return trainers;
     }
 }
 

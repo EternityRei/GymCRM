@@ -1,5 +1,6 @@
 package org.example.gymcrm.service.impl;
 
+import jakarta.persistence.EntityNotFoundException;
 import org.example.gymcrm.annotation.Authenticate;
 import org.example.gymcrm.model.Trainee;
 import org.example.gymcrm.model.Trainer;
@@ -14,6 +15,7 @@ import org.example.gymcrm.specification.TrainingSpecification;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,12 +48,20 @@ public class TraineeServiceImpl implements TraineeService {
     @Override
     public Trainee createTrainee(Trainee trainee) {
         User user = trainee.getUser();
+
+        logger.debug("Generating credentials for new trainee - " +
+                "First Name: {}," +
+                " Last Name: {}",
+                user.getFirstName(),
+                user.getLastName());
+
         String username = userCredentialsGenerator.createUsername(user.getFirstName(), user.getLastName());
         String password = userCredentialsGenerator.generateRandomPassword();
 
         user.setUsername(username);
         user.setPassword(password);
 
+        logger.debug("Validating generated user credentials");
         validationService.validateEntity(user);
 
         trainee.setUser(user);
@@ -63,11 +73,32 @@ public class TraineeServiceImpl implements TraineeService {
     @Override
     @Authenticate
     public Trainee updateTrainee(String id, Trainee updatedTrainee) {
-        logger.info("Updating trainee with ID: {}", id);
-        Trainee existingTrainee = traineeRepository.findById(Long.valueOf(id)).orElseThrow();
-        initCredentials(updatedTrainee, existingTrainee);
+        logger.debug("Attempting to update trainee with ID: {}", id);
 
-        validationService.validateEntity(existingTrainee);
+        Trainee existingTrainee;
+        try {
+            existingTrainee = traineeRepository.findById(Long.valueOf(id))
+                    .orElseThrow(() -> new EntityNotFoundException("Trainee not found with ID: " + id));
+        } catch (EntityNotFoundException e) {
+            logger.error("Failed to find trainee with ID: {}", id, e);
+            throw e;
+        }
+
+        logger.debug("Initializing credentials for trainee with ID: {}", id);
+        try {
+            initCredentials(updatedTrainee, existingTrainee);
+        } catch (Exception e) {
+            logger.error("Error initializing credentials for trainee with ID: {}", id, e);
+            throw e;
+        }
+
+        logger.debug("Validating updated trainee entity for ID: {}", id);
+        try {
+            validationService.validateEntity(existingTrainee);
+        } catch (Exception e) {
+            logger.error("Validation failed for updated trainee with ID: {}", id, e);
+            throw e;
+        }
 
         traineeRepository.save(existingTrainee);
         logger.info("Trainee with ID: {} updated successfully", id);
@@ -77,16 +108,30 @@ public class TraineeServiceImpl implements TraineeService {
     @Override
     @Authenticate
     public void updateTraineePassword(String id, String password) {
-        logger.info("Updating trainee password");
-        userCredentialsGenerator.updatePassword(id, password);
+        logger.debug("Attempting to update password for trainee with ID: {}", id);
+
+        try {
+            userCredentialsGenerator.updatePassword(id, password);
+            logger.info("Password updated successfully for trainee with ID: {}", id);
+        } catch (Exception e) {
+            logger.error("Failed to update password for trainee with ID: {}", id, e);
+        }
     }
+
 
     @Override
     @Authenticate
     public void deactivateTraineeProfile(String id) {
-        logger.info("Changing trainee account status");
-        userCredentialsGenerator.banUser(id);
+        logger.debug("Attempting to deactivate trainee profile with ID: {}", id);
+
+        try {
+            userCredentialsGenerator.banUser(id);
+            logger.info("Trainee profile deactivated successfully for ID: {}", id);
+        } catch (Exception e) {
+            logger.error("Failed to deactivate trainee profile for ID: {}", id, e);
+        }
     }
+
 
     private void initCredentials(Trainee updatedTrainee, Trainee existingTrainee) {
         existingTrainee.getUser().setFirstName(updatedTrainee.getUser().getFirstName());
@@ -99,73 +144,177 @@ public class TraineeServiceImpl implements TraineeService {
     @Override
     @Authenticate
     public void deleteTrainee(String id) {
-        logger.info("Deleting trainee with ID: {}", id);
-        traineeRepository.deleteById(Long.valueOf(id));
+        logger.debug("Attempting to delete trainee with ID: {}", id);
+
+        try {
+            traineeRepository.deleteById(Long.valueOf(id));
+            logger.info("Trainee successfully deleted with ID: {}", id);
+        } catch (EmptyResultDataAccessException e) {
+            logger.warn("No trainee found with ID: {} to delete", id);
+        } catch (Exception e) {
+            logger.error("Error deleting trainee with ID: {}", id, e);
+        }
     }
+
 
     @Override
     @Authenticate
     public void deleteTraineeByUsername(String username) {
-        logger.info("Deleting trainee with username={}", username);
-        Trainee trainee = traineeRepository.findByUsername(username).orElseThrow(() -> new RuntimeException("Trainee not found"));
-        traineeRepository.delete(trainee);
+        logger.debug("Attempting to delete trainee with username: {}", username);
+
+        try {
+            Trainee trainee = traineeRepository.findByUsername(username)
+                    .orElseThrow(() -> new EntityNotFoundException("Trainee not found with username: " + username));
+            traineeRepository.delete(trainee);
+            logger.info("Trainee successfully deleted with username: {}", username);
+        } catch (EntityNotFoundException e) {
+            logger.warn("No trainee found with username: {}", username, e);
+        } catch (Exception e) {
+            logger.error("Error deleting trainee with username: {}", username, e);
+        }
     }
+
 
     @Override
     @Authenticate
     public Optional<Trainee> getTrainee(String id) {
-        logger.info("Fetching trainee with ID: {}", id);
-        return traineeRepository.findById(Long.valueOf(id));
+        logger.debug("Attempting to fetch trainee with ID: {}", id);
+        Optional<Trainee> trainee = traineeRepository.findById(Long.valueOf(id));
+        if (trainee.isPresent()) {
+            logger.info("Trainee found with ID: {}", id);
+        } else {
+            logger.warn("No trainee found with ID: {}", id);
+        }
+        return trainee;
     }
 
     @Override
     @Authenticate
     public Optional<Trainee> getTraineeByUsername(String username) {
-        logger.info("Fetching trainee by username={}", username);
-        return traineeRepository.findByUsername(username);
+        logger.debug("Attempting to fetch trainee by username: {}", username);
+        Optional<Trainee> trainee = traineeRepository.findByUsername(username);
+        if (trainee.isPresent()) {
+            logger.info("Trainee found with username: {}", username);
+        } else {
+            logger.warn("No trainee found with username: {}", username);
+        }
+        return trainee;
     }
+
 
     @Override
     @Authenticate
     public List<Trainee> getAllTrainees() {
-        logger.info("Fetching all trainers");
-        return traineeRepository.findAll();
+        logger.debug("Fetching all trainees");
+        List<Trainee> trainees = traineeRepository.findAll();
+        if (trainees.isEmpty()) {
+            logger.info("No trainees found");
+        } else {
+            logger.info("Found {} trainees", trainees.size());
+        }
+        return trainees;
     }
 
     @Override
     @Authenticate
     public List<Training> getTraineeTrainings(String traineeUsername, Date from, Date to, String trainerName, String trainingType) {
-        Specification<Training> spec = TrainingSpecification.byCriteria(traineeUsername, null, from, to, trainerName, null, trainingType);
-        return trainingRepository.findAll(spec);
+        logger.info("Fetching trainings for " +
+                        "traineeUsername={}," +
+                        " from={}, " +
+                        "to={}, " +
+                        "trainerName={}," +
+                        " trainingType={}",
+                traineeUsername,
+                from,
+                to,
+                trainerName,
+                trainingType);
+
+        Specification<Training> spec = TrainingSpecification
+                .byCriteria(
+                        traineeUsername,
+                        null,
+                        from,
+                        to,
+                        trainerName,
+                        null,
+                        trainingType
+                );
+
+        List<Training> trainings = trainingRepository.findAll(spec);
+
+        if (trainings.isEmpty()) {
+            logger.warn("No trainings found matching the specified criteria for traineeUsername={}", traineeUsername);
+        } else {
+            logger.info("Found {} trainings for traineeUsername={}", trainings.size(), traineeUsername);
+        }
+
+        return trainings;
     }
+
 
     @Transactional
     @Authenticate
     public void addTrainersToTrainee(String traineeUsername, List<Long> newTrainerIds) {
-        Trainee trainee = traineeRepository.findByUsername(traineeUsername)
-                .orElseThrow(() -> new RuntimeException("Trainee not found"));
+        logger.debug("Attempting to add trainers to trainee with username={}", traineeUsername);
+        Trainee trainee;
+        try {
+            trainee = traineeRepository.findByUsername(traineeUsername)
+                    .orElseThrow(() -> new RuntimeException("Trainee not found"));
+        } catch (RuntimeException e) {
+            logger.error("Failed to find trainee with username={}", traineeUsername, e);
+            throw e;
+        }
 
         Set<Long> existingTrainerIds = getExistingTrainerIds(trainee);
 
+        logger.debug("Current trainer IDs for traineeUsername={}: {}. Adding new trainer IDs: {}", traineeUsername, existingTrainerIds, newTrainerIds);
+
         updateTrainersList(newTrainerIds, existingTrainerIds, trainee);
 
-        traineeRepository.save(trainee);
+        try {
+            traineeRepository.save(trainee);
+            logger.info("Successfully added trainers to trainee with username={}. Updated trainer IDs: {}", traineeUsername, getExistingTrainerIds(trainee));
+        } catch (Exception e) {
+            logger.error("Failed to add trainers to trainee with username={}", traineeUsername, e);
+            throw e;
+        }
     }
 
+
     private void updateTrainersList(List<Long> newTrainerIds, Set<Long> existingTrainerIds, Trainee trainee) {
+        logger.debug("Starting to update trainers list for trainee with ID: {}. New trainer IDs: {}", trainee.getId(), newTrainerIds);
+
         newTrainerIds.stream()
                 .filter(id -> !existingTrainerIds.contains(id)) // Filter out already associated trainers
                 .forEach(id -> {
-                    Trainer trainer = trainerRepository.findById(id)
-                            .orElseThrow(() -> new RuntimeException("Trainer not found: " + id));
-                    trainee.getTrainers().add(trainer); // Add new trainers
+                    try {
+                        Trainer trainer = trainerRepository.findById(id)
+                                .orElseThrow(() -> new RuntimeException("Trainer not found: " + id));
+                        trainee.getTrainers().add(trainer); // Add new trainers
+                        logger.info("Added trainer with ID: {} to trainee with ID: {}", id, trainee.getId());
+                    } catch (RuntimeException e) {
+                        logger.error("Unable to find or add trainer with ID: {} to trainee with ID: {}", id, trainee.getId(), e);
+                        throw e;
+                    }
                 });
+
+        logger.debug("Completed updating trainers list for trainee with ID: {}", trainee.getId());
     }
 
     private Set<Long> getExistingTrainerIds(Trainee trainee) {
-        return trainee.getTrainers().stream()
-                .map(Trainer::getId)
-                .collect(Collectors.toSet());
+        Set<Long> trainerIds;
+        try {
+            trainerIds = trainee.getTrainers().stream()
+                    .map(Trainer::getId)
+                    .collect(Collectors.toSet());
+
+            logger.debug("Retrieved {} existing trainer IDs for trainee with ID: {}", trainerIds.size(), trainee.getId());
+        } catch (Exception e) {
+            logger.error("Error retrieving existing trainer IDs for trainee with ID: {}", trainee.getId(), e);
+            throw e;
+        }
+        return trainerIds;
     }
 }
 
