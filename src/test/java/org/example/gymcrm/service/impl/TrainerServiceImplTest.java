@@ -2,6 +2,7 @@ package org.example.gymcrm.service.impl;
 
 import org.example.gymcrm.model.Trainer;
 import org.example.gymcrm.model.Training;
+import org.example.gymcrm.model.TrainingType;
 import org.example.gymcrm.model.User;
 import org.example.gymcrm.repository.TrainerRepository;
 import org.example.gymcrm.repository.TrainingRepository;
@@ -39,7 +40,7 @@ class TrainerServiceImplTest {
     void whenCreateTrainer_thenSuccess() {
         String firstName = "John";
         String lastName = "Doe";
-        String specialization = "Fitness";
+        TrainingType specialization = new TrainingType(1L, "Fitness");
 
         when(userCredentialsService.createUsername(firstName, lastName)).thenReturn("johndoe");
         when(userCredentialsService.generateRandomPassword()).thenReturn("randomPassword");
@@ -59,18 +60,18 @@ class TrainerServiceImplTest {
 
         when(trainerRepository.findById(Long.valueOf(id))).thenReturn(Optional.empty());
 
-        assertThrows(RuntimeException.class, () -> trainerService.updateTrainer(id, updatedTrainer));
+        assertThrows(RuntimeException.class, () -> trainerService.updateTrainer(updatedTrainer));
     }
 
     @Test
     void whenDeactivateTrainerProfile_thenSuccess() {
         String id = "1";
 
-        doNothing().when(userCredentialsService).banUser(id);
+        doNothing().when(userCredentialsService).modifyAccountStatus(id);
 
-        trainerService.deactivateTrainerProfile(id);
+        trainerService.updateTrainerProfileStatus(id);
 
-        verify(userCredentialsService, times(1)).banUser(id);
+        verify(userCredentialsService, times(1)).modifyAccountStatus(id);
     }
 
     @Test

@@ -72,46 +72,46 @@ public class TraineeServiceImpl implements TraineeService {
 
     @Override
     @Authenticate
-    public Trainee updateTrainee(String id, Trainee updatedTrainee) {
-        logger.debug("Attempting to update trainee with ID: {}", id);
+    public Trainee updateTrainee(Trainee updatedTrainee) {
+        logger.debug("Attempting to update trainee with ID: {}", updatedTrainee.getId());
 
         Trainee existingTrainee;
         try {
-            existingTrainee = traineeRepository.findById(Long.valueOf(id))
-                    .orElseThrow(() -> new EntityNotFoundException("Trainee not found with ID: " + id));
+            existingTrainee = traineeRepository.findById(updatedTrainee.getId())
+                    .orElseThrow(() -> new EntityNotFoundException("Trainee not found with ID: " + updatedTrainee.getId()));
         } catch (EntityNotFoundException e) {
-            logger.error("Failed to find trainee with ID: {}", id, e);
+            logger.error("Failed to find trainee with ID: {}", updatedTrainee.getId(), e);
             throw e;
         }
 
-        logger.debug("Initializing credentials for trainee with ID: {}", id);
+        logger.debug("Initializing credentials for trainee with ID: {}", existingTrainee.getId());
         try {
             initCredentials(updatedTrainee, existingTrainee);
         } catch (Exception e) {
-            logger.error("Error initializing credentials for trainee with ID: {}", id, e);
+            logger.error("Error initializing credentials for trainee with ID: {}", existingTrainee.getId(), e);
             throw e;
         }
 
-        logger.debug("Validating updated trainee entity for ID: {}", id);
+        logger.debug("Validating updated trainee entity for ID: {}", existingTrainee.getId());
         try {
             validationService.validateEntity(existingTrainee);
         } catch (Exception e) {
-            logger.error("Validation failed for updated trainee with ID: {}", id, e);
+            logger.error("Validation failed for updated trainee with ID: {}", existingTrainee.getId(), e);
             throw e;
         }
 
         traineeRepository.save(existingTrainee);
-        logger.info("Trainee with ID: {} updated successfully", id);
+        logger.info("Trainee with ID: {} updated successfully", existingTrainee.getId());
         return existingTrainee;
     }
 
     @Override
     @Authenticate
-    public void updateTraineePassword(String id, String password) {
+    public void updateTraineePassword(String id, String newPassword) {
         logger.debug("Attempting to update password for trainee with ID: {}", id);
 
         try {
-            userCredentialsGenerator.updatePassword(id, password);
+            userCredentialsGenerator.updatePassword(id, newPassword);
             logger.info("Password updated successfully for trainee with ID: {}", id);
         } catch (Exception e) {
             logger.error("Failed to update password for trainee with ID: {}", id, e);
@@ -121,14 +121,14 @@ public class TraineeServiceImpl implements TraineeService {
 
     @Override
     @Authenticate
-    public void deactivateTraineeProfile(String id) {
-        logger.debug("Attempting to deactivate trainee profile with ID: {}", id);
+    public void updateTraineeProfileStatus(String id) {
+        logger.debug("Attempting to change trainee profile status with ID: {}", id);
 
         try {
-            userCredentialsGenerator.banUser(id);
-            logger.info("Trainee profile deactivated successfully for ID: {}", id);
+            userCredentialsGenerator.modifyAccountStatus(id);
+            logger.info("Trainee profile status was changed successfully for ID: {}", id);
         } catch (Exception e) {
-            logger.error("Failed to deactivate trainee profile for ID: {}", id, e);
+            logger.error("Failed to change trainee profile status for ID: {}", id, e);
         }
     }
 
@@ -190,17 +190,17 @@ public class TraineeServiceImpl implements TraineeService {
 
     @Override
     @Authenticate
-    public Optional<Trainee> getTraineeByUsername(String username) {
+    public Trainee getTraineeByUsername(String username) {
         logger.debug("Attempting to fetch trainee by username: {}", username);
-        Optional<Trainee> trainee = traineeRepository.findByUsername(username);
-        if (trainee.isPresent()) {
+        try{
+            Trainee trainee = traineeRepository.findByUsername(username).orElseThrow(EntityNotFoundException::new);
             logger.info("Trainee found with username: {}", username);
-        } else {
+            return trainee;
+        } catch (EntityNotFoundException e){
             logger.warn("No trainee found with username: {}", username);
+            throw e;
         }
-        return trainee;
     }
-
 
     @Override
     @Authenticate
@@ -315,6 +315,15 @@ public class TraineeServiceImpl implements TraineeService {
             throw e;
         }
         return trainerIds;
+    }
+
+    @Transactional
+    public Optional<Trainee> getTraineeByUsernameAuthentication(String username) {
+        return traineeRepository.findByUsername(username);
+    }
+
+    public Optional<Trainee> getTraineeAuthentication(String id) {
+        return traineeRepository.findById(Long.valueOf(id));
     }
 }
 

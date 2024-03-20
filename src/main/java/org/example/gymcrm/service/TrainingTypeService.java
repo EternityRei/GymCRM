@@ -8,4 +8,7 @@ import java.util.Optional;
 public interface TrainingTypeService {
     Optional<TrainingType> findById(String id);
     List<TrainingType> findAll();
+
+    TrainingType createTrainingType(String name);
+
 }

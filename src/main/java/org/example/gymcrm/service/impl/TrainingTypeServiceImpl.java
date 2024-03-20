@@ -48,4 +48,11 @@ public class TrainingTypeServiceImpl implements TrainingTypeService {
         }
         return trainingTypes;
     }
+
+    @Override
+    public TrainingType createTrainingType(String name) {
+        TrainingType trainingType = new TrainingType();
+        trainingType.setName(name);
+        return trainingTypeRepository.save(trainingType);
+    }
 }

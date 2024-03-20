@@ -15,6 +15,7 @@ import java.util.Set;
 @Table(name = "trainees")
 public class Trainee {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @Column(name = "date_of_birth")
     @Temporal(TemporalType.DATE)
@@ -26,14 +27,13 @@ public class Trainee {
 
     @NotNull(message = "User must not be null")
     @OneToOne(cascade = {CascadeType.REMOVE, CascadeType.PERSIST})
-    @MapsId
-    @JoinColumn(name = "id")
+    @JoinColumn(name = "user_id", referencedColumnName = "id")
     private User user;
 
-    @OneToMany(mappedBy = "trainee", fetch = FetchType.LAZY, orphanRemoval = true)
+    @OneToMany(mappedBy = "trainee", fetch = FetchType.EAGER, orphanRemoval = true)
     List<Training> trainingList;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "trainee_trainer",
             joinColumns = @JoinColumn(name = "trainee_id"),

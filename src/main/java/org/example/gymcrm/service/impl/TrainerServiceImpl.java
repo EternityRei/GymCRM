@@ -1,12 +1,15 @@
 package org.example.gymcrm.service.impl;
 
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import org.example.gymcrm.annotation.Authenticate;
 import org.example.gymcrm.model.Trainer;
 import org.example.gymcrm.model.Training;
+import org.example.gymcrm.model.TrainingType;
 import org.example.gymcrm.model.User;
 import org.example.gymcrm.repository.TrainerRepository;
 import org.example.gymcrm.repository.TrainingRepository;
+import org.example.gymcrm.repository.TrainingTypeRepository;
 import org.example.gymcrm.service.TrainerService;
 import org.example.gymcrm.service.ValidationService;
 import org.example.gymcrm.specification.TrainingSpecification;
@@ -26,20 +29,23 @@ public class TrainerServiceImpl implements TrainerService {
 
     private final UserServiceImpl userCredentialsService;
     private final TrainingRepository trainingRepository;
+    private final TrainingTypeRepository trainingTypeRepository;
     private final ValidationService validationService;
     private static final Logger logger = LoggerFactory.getLogger(TrainerServiceImpl.class);
 
 
     @Autowired
-    public TrainerServiceImpl(TrainerRepository trainerRepository, UserServiceImpl userCredentialsService, TrainingRepository trainingRepository, ValidationService validationService) {
+    public TrainerServiceImpl(TrainerRepository trainerRepository, UserServiceImpl userCredentialsService, TrainingRepository trainingRepository, TrainingTypeRepository trainingTypeRepository, ValidationService validationService) {
         this.trainerRepository = trainerRepository;
         this.userCredentialsService = userCredentialsService;
         this.trainingRepository = trainingRepository;
+        this.trainingTypeRepository = trainingTypeRepository;
         this.validationService = validationService;
     }
 
     @Override
-    public Trainer createTrainer(String firstName, String lastName, String specialization) {
+    @Transactional
+    public Trainer createTrainer(String firstName, String lastName, TrainingType specialization) {
         logger.debug("Creating trainer with name: {} {}, specialization: {}", firstName, lastName, specialization);
 
         String username = userCredentialsService.createUsername(firstName, lastName);
@@ -57,7 +63,8 @@ public class TrainerServiceImpl implements TrainerService {
 
         Trainer trainer = new Trainer();
         trainer.setUser(user);
-        trainer.setSpecialization(specialization);
+        TrainingType managedSpecialization = trainingTypeRepository.findByName(specialization.getName()).orElseThrow();
+        trainer.setSpecialization(managedSpecialization);
 
         logger.debug("Validating created trainer={}", trainer);
         validationService.validateEntity(trainer);
@@ -70,22 +77,22 @@ public class TrainerServiceImpl implements TrainerService {
 
     @Override
     @Authenticate
-    public Trainer updateTrainer(String id, Trainer updatedTrainer) {
-        logger.debug("Attempting to update trainer with ID: {}", id);
+    public Trainer updateTrainer(Trainer updatedTrainer) {
+        logger.debug("Attempting to update trainer with ID: {}", updatedTrainer.getId());
 
-        Trainer existingTrainer = trainerRepository.findById(Long.valueOf(id))
-                .orElseThrow(() -> new EntityNotFoundException("Trainer not found with ID: " + id));
-        logger.debug("Trainer found with ID: {}. Proceeding with update.", id);
+        Trainer existingTrainer = trainerRepository.findById(updatedTrainer.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Trainer not found with ID: " + updatedTrainer.getId()));
+        logger.debug("Trainer found with ID: {}. Proceeding with update.", existingTrainer.getId());
 
         initCredentials(updatedTrainer, existingTrainer);
-        logger.debug("Credentials initialized for trainer with ID: {}", id);
+        logger.debug("Credentials initialized for trainer with ID: {}", existingTrainer.getId());
 
         try {
             validationService.validateEntity(existingTrainer);
             trainerRepository.save(existingTrainer);
-            logger.info("Trainer with ID: {} updated successfully.", id);
+            logger.info("Trainer with ID: {} updated successfully.", existingTrainer.getId());
         } catch (Exception e) {
-            logger.error("Failed to update trainer with ID: {}. Error: {}", id, e.getMessage());
+            logger.error("Failed to update trainer with ID: {}. Error: {}", existingTrainer.getId(), e.getMessage());
         }
 
         return existingTrainer;
@@ -107,12 +114,12 @@ public class TrainerServiceImpl implements TrainerService {
 
     @Override
     @Authenticate
-    public void deactivateTrainerProfile(String id) {
+    public void updateTrainerProfileStatus(String id) {
         logger.debug("Attempting to deactivate trainer profile for ID: {}", id);
 
         try {
-            boolean isDeactivated = userCredentialsService.banUser(id);
-            if (isDeactivated) {
+            boolean statusChanged = userCredentialsService.modifyAccountStatus(id);
+            if (statusChanged) {
                 logger.info("Trainer profile successfully deactivated for ID: {}", id);
             } else {
                 logger.info("Trainer profile successfully activated for ID: {}", id);
@@ -143,6 +150,11 @@ public class TrainerServiceImpl implements TrainerService {
         return trainer;
     }
 
+    @Override
+    public Optional<Trainer> getTrainerAuthentication(String id) {
+        return trainerRepository.findById(Long.valueOf(id));
+    }
+
 
     @Override
     @Authenticate
@@ -155,6 +167,11 @@ public class TrainerServiceImpl implements TrainerService {
             logger.warn("No trainer found with username: {}", username);
         }
         return trainer;
+    }
+
+    @Override
+    public Optional<Trainer> getTrainerByUsernameAuthenticate(String username) {
+        return trainerRepository.findByUsername(username);
     }
 
     @Override

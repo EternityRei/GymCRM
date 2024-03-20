@@ -72,10 +72,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public boolean banUser(String id) {
+    public boolean modifyAccountStatus(String id) {
         logger.info("Changing account status for user with id={}", id);
         User user = userRepository.findById(Long.valueOf(id)).orElseThrow(() -> new RuntimeException("User not found"));
         user.setActive(!user.isActive());
+        userRepository.save(user);
         return user.isActive();
     }
 
@@ -91,6 +92,7 @@ public class UserServiceImpl implements UserService {
     }
 
 
+    @Override
     public String generateRandomPassword() {
         String chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@#$%";
         SecureRandom rnd = new SecureRandom();

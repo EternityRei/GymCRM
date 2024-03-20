@@ -9,15 +9,17 @@ import java.util.Optional;
 
 public interface TraineeService {
     Trainee createTrainee(Trainee trainee);
-    Trainee updateTrainee(String id, Trainee trainee);
+    Trainee updateTrainee(Trainee trainee);
     void updateTraineePassword(String id, String password);
-    void deactivateTraineeProfile(String id);
+    void updateTraineeProfileStatus(String id);
     void deleteTrainee(String id);
     void deleteTraineeByUsername(String username);
     Optional<Trainee> getTrainee(String id);
-    Optional<Trainee> getTraineeByUsername(String username);
+    Trainee getTraineeByUsername(String username);
     List<Trainee> getAllTrainees();
     List<Training> getTraineeTrainings(String traineeUsername, Date from, Date to, String trainerName, String trainingType);
     void addTrainersToTrainee(String traineeUsername, List<Long> newTrainerIds);
+    Optional<Trainee> getTraineeByUsernameAuthentication(String username);
+    Optional<Trainee> getTraineeAuthentication(String id);
 }
 

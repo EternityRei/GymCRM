@@ -9,12 +9,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class TrainerTest {
     private Trainer trainer;
     private User user;
+    private TrainingType trainingType;
 
     @BeforeEach
     void setUp() {
         user = new User(); // Assuming User is another entity class like Trainer
         user.setId(1L);
-        trainer = new Trainer(1L, "Fitness", user);
+        trainingType = new TrainingType(1L, "Fitness");
+        trainer = new Trainer(1L, trainingType, user);
     }
 
     @Test
@@ -24,7 +26,7 @@ public class TrainerTest {
 
     @Test
     void getSpecialization_ReturnsCorrectSpecialization() {
-        assertEquals("Fitness", trainer.getSpecialization());
+        assertEquals("Fitness", trainer.getSpecialization().getName());
     }
 
     @Test
@@ -34,13 +36,13 @@ public class TrainerTest {
 
     @Test
     void setSpecialization_SetsCorrectSpecialization() {
-        trainer.setSpecialization("Yoga");
-        assertEquals("Yoga", trainer.getSpecialization());
+        trainer.setSpecialization(new TrainingType(2L, "Yoga"));
+        assertEquals("Yoga", trainer.getSpecialization().getName());
     }
 
     @Test
     void testEquals_Symmetric() {
-        Trainer anotherTrainer = new Trainer(1L, "Fitness", user);
+        Trainer anotherTrainer = new Trainer(1L, trainingType, user);
         assertTrue(trainer.equals(anotherTrainer) && anotherTrainer.equals(trainer));
         assertEquals(trainer.hashCode(), anotherTrainer.hashCode());
     }

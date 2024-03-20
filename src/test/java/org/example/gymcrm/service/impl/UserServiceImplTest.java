@@ -73,7 +73,7 @@ class UserServiceImplTest {
 
         when(userRepository.findById(Long.valueOf(userId))).thenReturn(Optional.of(user));
 
-        userService.banUser(userId);
+        userService.modifyAccountStatus(userId);
 
         assertFalse(user.isActive());
     }
@@ -121,7 +121,7 @@ class UserServiceImplTest {
         String userId = "3";
         when(userRepository.findById(Long.valueOf(userId))).thenReturn(Optional.empty());
 
-        Exception exception = assertThrows(RuntimeException.class, () -> userService.banUser(userId));
+        Exception exception = assertThrows(RuntimeException.class, () -> userService.modifyAccountStatus(userId));
 
         assertTrue(exception.getMessage().contains("User not found"));
     }

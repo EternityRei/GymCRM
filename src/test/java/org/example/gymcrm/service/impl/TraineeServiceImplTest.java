@@ -76,9 +76,9 @@ public class TraineeServiceImplTest {
         String username = "nonexistent";
         when(traineeRepository.findByUsername(username)).thenReturn(Optional.empty());
 
-        Optional<Trainee> result = traineeService.getTraineeByUsername(username);
+        Trainee result = traineeService.getTraineeByUsername(username);
 
-        assertFalse(result.isPresent());
+        assertNotNull(result);
     }
 
     @Test
@@ -98,7 +98,7 @@ public class TraineeServiceImplTest {
         when(traineeRepository.findById(Long.valueOf(traineeId))).thenReturn(Optional.of(existingTrainee));
         when(traineeRepository.save(any(Trainee.class))).thenReturn(existingTrainee);
 
-        Trainee result = traineeService.updateTrainee(traineeId, updatedTrainee);
+        Trainee result = traineeService.updateTrainee(updatedTrainee);
 
         assertNotNull(result);
         assertEquals("NewFirstName", result.getUser().getFirstName());
@@ -144,13 +144,13 @@ public class TraineeServiceImplTest {
     @Test
     void whenDeactivateTraineeProfile_thenSuccess() {
         String id = "1";
-        doNothing().when(userCredentialsGenerator).banUser(anyString());
+        doNothing().when(userCredentialsGenerator).modifyAccountStatus(anyString());
 
         // Execution
-        traineeService.deactivateTraineeProfile(id);
+        traineeService.updateTraineeProfileStatus(id);
 
         // Verification
-        verify(userCredentialsGenerator, times(1)).banUser(id);
+        verify(userCredentialsGenerator, times(1)).modifyAccountStatus(id);
     }
 
     @Test

@@ -3,6 +3,7 @@ package org.example.gymcrm.model;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import org.example.gymcrm.model.group.OnCreate;
 import org.example.gymcrm.model.group.OnUpdate;
 
 import java.util.Objects;
@@ -11,17 +12,20 @@ import java.util.Objects;
 @Table(name = "trainers")
 public class Trainer {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @NotBlank(message = "Specialization is a mandatory field", groups = OnUpdate.class)
-    private String specialization;
+
+    @NotNull(message = "Training type is a mandatory field", groups = OnCreate.class)
+    @ManyToOne(cascade = {CascadeType.REMOVE, CascadeType.PERSIST})
+    @JoinColumn(name = "specialization", referencedColumnName = "id")
+    private TrainingType specialization;
 
     @NotNull(message = "User must not be null")
     @OneToOne(cascade = {CascadeType.REMOVE, CascadeType.PERSIST})
-    @MapsId
-    @JoinColumn(name = "id")
+    @JoinColumn(name = "user_id", referencedColumnName = "id")
     private User user;
 
-    public Trainer(Long id, String specialization, User user) {
+    public Trainer(Long id, TrainingType specialization, User user) {
         this.id = id;
         this.specialization = specialization;
         this.user = user;
@@ -39,11 +43,11 @@ public class Trainer {
         this.id = id;
     }
 
-    public String getSpecialization() {
+    public TrainingType getSpecialization() {
         return specialization;
     }
 
-    public void setSpecialization(String specialization) {
+    public void setSpecialization(TrainingType specialization) {
         this.specialization = specialization;
     }
 
