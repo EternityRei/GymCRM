@@ -97,22 +97,4 @@ public class AuthenticationAspect {
         // Example authentication check. Adjust based on how your AuthenticationService is implemented.
         return authenticationService.authenticate(user.getUsername(), user.getPassword());
     }
-
-
-    private User getUser(Object obj) {
-        User user = new User();
-        if (obj instanceof Trainee trainee) {
-            user = trainee.getUser();
-            if (user == null) {
-                throw new IllegalArgumentException("Trainee user cannot be null");
-            }
-        }
-        if (obj instanceof Trainer trainer) {
-            user = trainer.getUser();
-            if (user == null) {
-                throw new IllegalArgumentException("Trainer user cannot be null");
-            }
-        }
-        return user;
-    }
 }
