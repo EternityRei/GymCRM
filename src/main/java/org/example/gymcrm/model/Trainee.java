@@ -7,6 +7,7 @@ import jakarta.validation.constraints.Size;
 import org.example.gymcrm.model.group.OnCreate;
 import org.example.gymcrm.model.group.OnUpdate;
 
+import java.sql.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -19,10 +20,8 @@ public class Trainee {
     private Long id;
     @Column(name = "date_of_birth")
     @Temporal(TemporalType.DATE)
-    @NotBlank(message = "Date of birth is a mandatory field", groups = {OnCreate.class, OnUpdate.class})
-    private String dateOfBirth;
-    @NotBlank(message = "Address is a mandatory field", groups = {OnCreate.class, OnUpdate.class})
-    @Size(max = 150, message = "Maximum address field length is 150 characters",  groups = {OnCreate.class, OnUpdate.class})
+    private Date dateOfBirth;
+    @Column
     private String address;
 
     @NotNull(message = "User must not be null")
@@ -31,7 +30,7 @@ public class Trainee {
     private User user;
 
     @OneToMany(mappedBy = "trainee", fetch = FetchType.EAGER, orphanRemoval = true)
-    List<Training> trainingList;
+    private List<Training> trainingList;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
@@ -41,7 +40,7 @@ public class Trainee {
     )
     private Set<Trainer> trainers;
 
-    public Trainee(Long id, String dateOfBirth, String address, User user) {
+    public Trainee(Long id, Date dateOfBirth, String address, User user) {
         this.id = id;
         this.dateOfBirth = dateOfBirth;
         this.address = address;
@@ -55,11 +54,11 @@ public class Trainee {
         return id;
     }
 
-    public String getDateOfBirth() {
+    public Date getDateOfBirth() {
         return dateOfBirth;
     }
 
-    public void setDateOfBirth(String dateOfBirth) {
+    public void setDateOfBirth(Date dateOfBirth) {
         this.dateOfBirth = dateOfBirth;
     }
 
@@ -89,6 +88,14 @@ public class Trainee {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public List<Training> getTrainingList() {
+        return trainingList;
+    }
+
+    public void setTrainingList(List<Training> trainingList) {
+        this.trainingList = trainingList;
     }
 
     @Override

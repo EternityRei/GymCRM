@@ -101,7 +101,8 @@ public class TrainerServiceImpl implements TrainerService {
 
     @Override
     @Authenticate
-    public void updateTrainerPassword(String id, String newPassword) {
+    public void updateTrainerPassword(Trainer trainer, String newPassword) {
+        String id = String.valueOf(trainer.getUser().getId());
         logger.debug("Attempting to update password for trainer with ID: {}", id);
         try {
             userCredentialsService.updatePassword(id, newPassword);
@@ -114,9 +115,9 @@ public class TrainerServiceImpl implements TrainerService {
 
     @Override
     @Authenticate
-    public void updateTrainerProfileStatus(String id) {
+    public void updateTrainerProfileStatus(Trainer trainer) {
+        String id = String.valueOf(trainer.getUser().getId());
         logger.debug("Attempting to deactivate trainer profile for ID: {}", id);
-
         try {
             boolean statusChanged = userCredentialsService.modifyAccountStatus(id);
             if (statusChanged) {
@@ -137,28 +138,10 @@ public class TrainerServiceImpl implements TrainerService {
         existingTrainer.setSpecialization(trainer.getSpecialization());
     }
 
-    @Override
-    @Authenticate
-    public Optional<Trainer> getTrainer(String id) {
-        logger.debug("Attempting to fetch trainer with ID: {}", id);
-        Optional<Trainer> trainer = trainerRepository.findById(Long.valueOf(id));
-        if (trainer.isPresent()) {
-            logger.info("Trainer found with ID: {}", id);
-        } else {
-            logger.warn("No trainer found with ID: {}", id);
-        }
-        return trainer;
-    }
-
-    @Override
-    public Optional<Trainer> getTrainerAuthentication(String id) {
-        return trainerRepository.findById(Long.valueOf(id));
-    }
-
 
     @Override
     @Authenticate
-    public Optional<Trainer> getTrainerByUsername(String username) {
+    public Optional<Trainer> getTrainerByUsername(String username, String password) {
         logger.debug("Attempting to fetch trainer by username: {}", username);
         Optional<Trainer> trainer = trainerRepository.findByUsername(username);
         if (trainer.isPresent()) {
@@ -170,12 +153,6 @@ public class TrainerServiceImpl implements TrainerService {
     }
 
     @Override
-    public Optional<Trainer> getTrainerByUsernameAuthenticate(String username) {
-        return trainerRepository.findByUsername(username);
-    }
-
-    @Override
-    @Authenticate
     public List<Trainer> getAllTrainers() {
         logger.debug("Fetching all trainers");
         List<Trainer> trainers = trainerRepository.findAll();
@@ -186,7 +163,8 @@ public class TrainerServiceImpl implements TrainerService {
 
     @Override
     @Authenticate
-    public List<Training> getTrainerTrainings(String trainerUsername, Date from, Date to, String traineeName) {
+    public List<Training> getTrainerTrainings(Trainer trainer, Date from, Date to, String traineeName) {
+        String trainerUsername = trainer.getUser().getUsername();
         logger.info("Fetching trainings for " +
                 "trainer: {}, " +
                 "from: {}," +
@@ -219,7 +197,7 @@ public class TrainerServiceImpl implements TrainerService {
 
     @Override
     @Authenticate
-    public List<Trainer> getTrainersNotAssignedToTraineeByUsername(String username) {
+    public List<Trainer> getTrainersNotAssignedToTraineeByUsername(String username, String password) {
         logger.debug("Fetching trainers not assigned to trainee with username: {}", username);
         List<Trainer> trainers = trainerRepository.findTrainersNotAssignedToTraineeByUsername(username);
         logger.info("Found {} trainers not assigned to trainee with username: {}", trainers.size(), username);

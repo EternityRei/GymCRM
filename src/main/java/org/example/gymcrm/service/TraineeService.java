@@ -1,6 +1,7 @@
 package org.example.gymcrm.service;
 
 import org.example.gymcrm.model.Trainee;
+import org.example.gymcrm.model.Trainer;
 import org.example.gymcrm.model.Training;
 
 import java.sql.Date;
@@ -10,16 +11,14 @@ import java.util.Optional;
 public interface TraineeService {
     Trainee createTrainee(Trainee trainee);
     Trainee updateTrainee(Trainee trainee);
-    void updateTraineePassword(String id, String password);
-    void updateTraineeProfileStatus(String id);
+    void updateTraineePassword(Trainee trainee, String newPassword);
+    void updateTraineeProfileStatus(Trainee trainee);
     void deleteTrainee(String id);
-    void deleteTraineeByUsername(String username);
+    void deleteTraineeByUsername(String username, String password);
     Optional<Trainee> getTrainee(String id);
-    Trainee getTraineeByUsername(String username);
+    Trainee getTraineeByUsername(String username, String password);
     List<Trainee> getAllTrainees();
-    List<Training> getTraineeTrainings(String traineeUsername, Date from, Date to, String trainerName, String trainingType);
-    void addTrainersToTrainee(String traineeUsername, List<Long> newTrainerIds);
-    Optional<Trainee> getTraineeByUsernameAuthentication(String username);
-    Optional<Trainee> getTraineeAuthentication(String id);
+    List<Training> getTraineeTrainings(Trainee trainee, Date from, Date to, String trainerName, String trainingType);
+    void addTrainersToTrainee(Trainee trainee, List<Trainer> newTrainers);
 }
 

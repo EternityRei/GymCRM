@@ -15,12 +15,10 @@ public class Trainer {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotNull(message = "Training type is a mandatory field", groups = OnCreate.class)
     @ManyToOne(cascade = {CascadeType.REMOVE, CascadeType.PERSIST})
     @JoinColumn(name = "specialization", referencedColumnName = "id")
     private TrainingType specialization;
 
-    @NotNull(message = "User must not be null")
     @OneToOne(cascade = {CascadeType.REMOVE, CascadeType.PERSIST})
     @JoinColumn(name = "user_id", referencedColumnName = "id")
     private User user;

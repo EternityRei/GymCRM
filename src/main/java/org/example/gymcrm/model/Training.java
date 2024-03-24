@@ -30,7 +30,6 @@ public class Training {
     @Column(name = "training_name", nullable = false)
     private String trainingName;
 
-    @NotNull
     @ManyToOne
     @JoinColumn(name = "training_type_id", referencedColumnName = "id")
     private TrainingType trainingType;
@@ -129,8 +128,8 @@ public class Training {
     public String toString() {
         return "Training{" +
                 "id='" + id + '\'' +
-                ", trainer=" + trainer +
-                ", trainee=" + trainee +
+                ", trainer=" + trainer.getId() +
+                ", trainee=" + trainee.getId() +
                 ", trainingType=" + trainingType +
                 ", trainingName='" + trainingName + '\'' +
                 ", trainingDate=" + trainingDate +

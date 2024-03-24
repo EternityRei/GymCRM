@@ -13,6 +13,7 @@ public class TrainingType {
     private Long id;
 
     @Column(name = "training_type_name", nullable = false)
+    @NotBlank(message = "Name is mandatory field")
     private String name;
 
     public TrainingType(Long id, String name) {

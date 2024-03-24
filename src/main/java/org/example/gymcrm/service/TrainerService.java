@@ -11,14 +11,11 @@ import java.util.Optional;
 public interface TrainerService {
     Trainer createTrainer(String firstName, String lastName, TrainingType specialization);
     Trainer updateTrainer(Trainer trainer);
-    void updateTrainerPassword(String id, String newPassword);
-    void updateTrainerProfileStatus(String id);
-    Optional<Trainer> getTrainer(String id);
-    Optional<Trainer> getTrainerAuthentication(String id);
-    Optional<Trainer> getTrainerByUsername(String username);
-    Optional<Trainer> getTrainerByUsernameAuthenticate(String username);
+    void updateTrainerPassword(Trainer trainer, String newPassword);
+    void updateTrainerProfileStatus(Trainer trainer);
+    Optional<Trainer> getTrainerByUsername(String username, String password);
     List<Trainer> getAllTrainers();
-    List<Training> getTrainerTrainings(String trainerUsername, Date from, Date to, String traineeName);
-    List<Trainer> getTrainersNotAssignedToTraineeByUsername(String username);
+    List<Training> getTrainerTrainings(Trainer trainer, Date from, Date to, String traineeName);
+    List<Trainer> getTrainersNotAssignedToTraineeByUsername(String username, String password);
 }
 

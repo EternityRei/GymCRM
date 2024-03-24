@@ -74,9 +74,10 @@ public class TraineeServiceImplTest {
     @Test
     void whenGetTraineeByUsernameNotFound_thenEmptyResult() {
         String username = "nonexistent";
+        String password = "nonexistent";
         when(traineeRepository.findByUsername(username)).thenReturn(Optional.empty());
 
-        Trainee result = traineeService.getTraineeByUsername(username);
+        Trainee result = traineeService.getTraineeByUsername(username, password);
 
         assertNotNull(result);
     }
@@ -112,45 +113,50 @@ public class TraineeServiceImplTest {
     @Test
     void whenDeleteTraineeByUsernameNotFound_thenThrowException() {
         String username = "unknown";
+        String password = "infnef";
         when(traineeRepository.findByUsername(username)).thenReturn(Optional.empty());
 
-        Exception exception = assertThrows(RuntimeException.class, () -> traineeService.deleteTraineeByUsername(username));
+        Exception exception = assertThrows(RuntimeException.class, () -> traineeService.deleteTraineeByUsername(username, password));
         assertTrue(exception.getMessage().contains("Trainee not found"));
     }
 
 
     @Test
     void whenAddTrainersToTrainee_thenSuccess() {
+        // Setup
         String traineeUsername = "traineeUsername";
         Trainee trainee = new Trainee();
         trainee.setTrainers(new HashSet<>()); // Assume trainee starts with no trainers
 
-        List<Long> newTrainerIds = Arrays.asList(1L, 2L);
         Trainer trainer1 = new Trainer();
         trainer1.setId(1L);
         Trainer trainer2 = new Trainer();
         trainer2.setId(2L);
+        List<Trainer> newTrainers = Arrays.asList(trainer1, trainer2);
 
         when(traineeRepository.findByUsername(traineeUsername)).thenReturn(Optional.of(trainee));
         when(trainerRepository.findById(1L)).thenReturn(Optional.of(trainer1));
         when(trainerRepository.findById(2L)).thenReturn(Optional.of(trainer2));
 
-        traineeService.addTrainersToTrainee(traineeUsername, newTrainerIds);
+        // Act
+        traineeService.addTrainersToTrainee(trainee, newTrainers);
 
+        // Assert
         assertEquals(2, trainee.getTrainers().size());
-        assertTrue(trainee.getTrainers().contains(trainer1) && trainee.getTrainers().contains(trainer2));
+        assertTrue(trainee.getTrainers().containsAll(newTrainers));
     }
+
 
     @Test
     void whenDeactivateTraineeProfile_thenSuccess() {
-        String id = "1";
+        Trainee trainee = new Trainee();
         doNothing().when(userCredentialsGenerator).modifyAccountStatus(anyString());
 
         // Execution
-        traineeService.updateTraineeProfileStatus(id);
+        traineeService.updateTraineeProfileStatus(trainee);
 
         // Verification
-        verify(userCredentialsGenerator, times(1)).modifyAccountStatus(id);
+        verify(userCredentialsGenerator, times(1)).modifyAccountStatus(String.valueOf(trainee.getUser().getId()));
     }
 
     @Test

@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -107,11 +108,15 @@ public class TraineeServiceImpl implements TraineeService {
 
     @Override
     @Authenticate
-    public void updateTraineePassword(String id, String newPassword) {
+    public void updateTraineePassword(Trainee trainee, String newPassword) {
+        String id = String.valueOf(trainee.getId());
         logger.debug("Attempting to update password for trainee with ID: {}", id);
 
         try {
-            userCredentialsGenerator.updatePassword(id, newPassword);
+            Trainee foundTrainee = traineeRepository.findById(Long.valueOf(id))
+                    .orElseThrow(() -> new RuntimeException("Trainee not found"));
+            String userId = String.valueOf(foundTrainee.getUser().getId());
+            userCredentialsGenerator.updatePassword(userId, newPassword);
             logger.info("Password updated successfully for trainee with ID: {}", id);
         } catch (Exception e) {
             logger.error("Failed to update password for trainee with ID: {}", id, e);
@@ -121,14 +126,15 @@ public class TraineeServiceImpl implements TraineeService {
 
     @Override
     @Authenticate
-    public void updateTraineeProfileStatus(String id) {
-        logger.debug("Attempting to change trainee profile status with ID: {}", id);
+    public void updateTraineeProfileStatus(Trainee trainee) {
+        String id = String.valueOf(trainee.getUser().getId());
+        logger.debug("Attempting to change trainee profile status with userId: {}", id);
 
         try {
             userCredentialsGenerator.modifyAccountStatus(id);
-            logger.info("Trainee profile status was changed successfully for ID: {}", id);
+            logger.info("Trainee profile status was changed successfully for userId: {}", id);
         } catch (Exception e) {
-            logger.error("Failed to change trainee profile status for ID: {}", id, e);
+            logger.error("Failed to change trainee profile status for userId: {}", id, e);
         }
     }
 
@@ -159,7 +165,7 @@ public class TraineeServiceImpl implements TraineeService {
 
     @Override
     @Authenticate
-    public void deleteTraineeByUsername(String username) {
+    public void deleteTraineeByUsername(String username, String password) {
         logger.debug("Attempting to delete trainee with username: {}", username);
 
         try {
@@ -190,10 +196,11 @@ public class TraineeServiceImpl implements TraineeService {
 
     @Override
     @Authenticate
-    public Trainee getTraineeByUsername(String username) {
+    public Trainee getTraineeByUsername(String username, String password) {
         logger.debug("Attempting to fetch trainee by username: {}", username);
+        Trainee trainee = null;
         try{
-            Trainee trainee = traineeRepository.findByUsername(username).orElseThrow(EntityNotFoundException::new);
+            trainee = traineeRepository.findByUsername(username).orElseThrow(EntityNotFoundException::new);
             logger.info("Trainee found with username: {}", username);
             return trainee;
         } catch (EntityNotFoundException e){
@@ -217,7 +224,8 @@ public class TraineeServiceImpl implements TraineeService {
 
     @Override
     @Authenticate
-    public List<Training> getTraineeTrainings(String traineeUsername, Date from, Date to, String trainerName, String trainingType) {
+    public List<Training> getTraineeTrainings(Trainee trainee, Date from, Date to, String trainerName, String trainingType) {
+        String traineeUsername = trainee.getUser().getUsername();
         logger.info("Fetching trainings for " +
                         "traineeUsername={}," +
                         " from={}, " +
@@ -255,75 +263,70 @@ public class TraineeServiceImpl implements TraineeService {
 
     @Transactional
     @Authenticate
-    public void addTrainersToTrainee(String traineeUsername, List<Long> newTrainerIds) {
+    public void addTrainersToTrainee(Trainee trainee, List<Trainer> newTrainers) {
+        String traineeUsername = trainee.getUser().getUsername();
         logger.debug("Attempting to add trainers to trainee with username={}", traineeUsername);
-        Trainee trainee;
-        try {
-            trainee = traineeRepository.findByUsername(traineeUsername)
-                    .orElseThrow(() -> new RuntimeException("Trainee not found"));
-        } catch (RuntimeException e) {
-            logger.error("Failed to find trainee with username={}", traineeUsername, e);
-            throw e;
-        }
 
-        Set<Long> existingTrainerIds = getExistingTrainerIds(trainee);
+        Set<Trainer> existingTrainers = getExistingTrainers(trainee);
 
-        logger.debug("Current trainer IDs for traineeUsername={}: {}. Adding new trainer IDs: {}", traineeUsername, existingTrainerIds, newTrainerIds);
+        // Assuming updateTrainersList has been adjusted to accept List<Trainer> for the new trainers
+        logger.debug("Current trainers for traineeUsername={}: {}. Adding new trainers.", traineeUsername, existingTrainers.stream().map(Trainer::getId).collect(Collectors.toList()));
 
-        updateTrainersList(newTrainerIds, existingTrainerIds, trainee);
+        updateTrainersList(newTrainers, existingTrainers, trainee); // Corrected to pass newTrainers directly
 
         try {
             traineeRepository.save(trainee);
-            logger.info("Successfully added trainers to trainee with username={}. Updated trainer IDs: {}", traineeUsername, getExistingTrainerIds(trainee));
+            logger.info("Successfully added trainers to trainee with username={}. Updated trainers: {}", traineeUsername, getExistingTrainers(trainee).stream().map(Trainer::getId).collect(Collectors.toList()));
         } catch (Exception e) {
             logger.error("Failed to add trainers to trainee with username={}", traineeUsername, e);
             throw e;
         }
     }
 
+    private void updateTrainersList(List<Trainer> newTrainers, Set<Trainer> existingTrainers, Trainee trainee) {
+        logger.debug("Starting to update trainers list for trainee with ID: {}. New trainers being added.", trainee.getId());
 
-    private void updateTrainersList(List<Long> newTrainerIds, Set<Long> existingTrainerIds, Trainee trainee) {
-        logger.debug("Starting to update trainers list for trainee with ID: {}. New trainer IDs: {}", trainee.getId(), newTrainerIds);
+        // Log the IDs of new trainers for debugging purposes
+        logger.debug("New trainer IDs: {}", newTrainers.stream().map(Trainer::getId).collect(Collectors.toList()));
 
-        newTrainerIds.stream()
-                .filter(id -> !existingTrainerIds.contains(id)) // Filter out already associated trainers
-                .forEach(id -> {
-                    try {
-                        Trainer trainer = trainerRepository.findById(id)
-                                .orElseThrow(() -> new RuntimeException("Trainer not found: " + id));
-                        trainee.getTrainers().add(trainer); // Add new trainers
-                        logger.info("Added trainer with ID: {} to trainee with ID: {}", id, trainee.getId());
-                    } catch (RuntimeException e) {
-                        logger.error("Unable to find or add trainer with ID: {} to trainee with ID: {}", id, trainee.getId(), e);
-                        throw e;
-                    }
-                });
+        // Use Set of existing trainer IDs for comparison to avoid adding duplicates
+        Set<Long> existingTrainerIds = existingTrainers.stream().map(Trainer::getId).collect(Collectors.toSet());
+
+        newTrainers.forEach(trainer -> {
+            // Check if the trainer is already associated with the trainee and exists in the system
+            if (!existingTrainerIds.contains(trainer.getId())) {
+                try {
+                    // Verify the trainer exists in the system before adding
+                    Trainer existingTrainer = trainerRepository.findById(trainer.getId())
+                            .orElseThrow(() -> new RuntimeException("Trainer not found in the system: " + trainer.getId()));
+                    // Since the trainer exists, add it to the trainee
+                    trainee.getTrainers().add(existingTrainer);
+                    logger.info("Added trainer with ID: {} to trainee with ID: {}", trainer.getId(), trainee.getId());
+                } catch (RuntimeException e) {
+                    logger.error("Unable to add trainer with ID: {} to trainee with ID: {}. Error: {}", trainer.getId(), trainee.getId(), e.getMessage());
+                    // Depending on how you want to handle errors, either log and continue or rethrow the exception
+                    throw e;
+                }
+            }
+        });
 
         logger.debug("Completed updating trainers list for trainee with ID: {}", trainee.getId());
     }
 
-    private Set<Long> getExistingTrainerIds(Trainee trainee) {
-        Set<Long> trainerIds;
+
+
+    private Set<Trainer> getExistingTrainers(Trainee trainee) {
+        Set<Trainer> existingTrainers = new HashSet<>();
         try {
-            trainerIds = trainee.getTrainers().stream()
-                    .map(Trainer::getId)
-                    .collect(Collectors.toSet());
-
-            logger.debug("Retrieved {} existing trainer IDs for trainee with ID: {}", trainerIds.size(), trainee.getId());
+            for (Trainer trainer : trainee.getTrainers()) {
+                trainerRepository.findById(trainer.getId()).ifPresent(existingTrainers::add);
+            }
+            logger.debug("Retrieved {} existing trainers for trainee with ID: {}", existingTrainers.size(), trainee.getId());
         } catch (Exception e) {
-            logger.error("Error retrieving existing trainer IDs for trainee with ID: {}", trainee.getId(), e);
-            throw e;
+            logger.error("Error retrieving existing trainers for trainee with ID: {}", trainee.getId(), e);
         }
-        return trainerIds;
+        return existingTrainers;
     }
 
-    @Transactional
-    public Optional<Trainee> getTraineeByUsernameAuthentication(String username) {
-        return traineeRepository.findByUsername(username);
-    }
-
-    public Optional<Trainee> getTraineeAuthentication(String id) {
-        return traineeRepository.findById(Long.valueOf(id));
-    }
 }
 

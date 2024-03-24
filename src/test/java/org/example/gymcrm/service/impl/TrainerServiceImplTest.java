@@ -20,6 +20,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import static org.springframework.data.jpa.domain.AbstractPersistable_.id;
 
 @ExtendWith(MockitoExtension.class)
 class TrainerServiceImplTest {
@@ -65,25 +66,29 @@ class TrainerServiceImplTest {
 
     @Test
     void whenDeactivateTrainerProfile_thenSuccess() {
-        String id = "1";
+        Trainer trainer = new Trainer();
+        trainer.setUser(new User());
+        trainer.getUser().setId(1L);
 
-        doNothing().when(userCredentialsService).modifyAccountStatus(id);
+        doNothing().when(userCredentialsService).modifyAccountStatus(String.valueOf(1L));
 
-        trainerService.updateTrainerProfileStatus(id);
+        trainerService.updateTrainerProfileStatus(trainer);
 
-        verify(userCredentialsService, times(1)).modifyAccountStatus(id);
+        verify(userCredentialsService, times(1)).modifyAccountStatus(String.valueOf(1L));
     }
 
     @Test
     void whenGetTrainerByUsernameFound_thenSuccess() {
         String username = "trainerUsername";
+        String password = "password";
+
         Trainer expectedTrainer = new Trainer();
         expectedTrainer.setUser(new User());
         expectedTrainer.getUser().setUsername(username);
 
         when(trainerRepository.findByUsername(username)).thenReturn(Optional.of(expectedTrainer));
 
-        Optional<Trainer> result = trainerService.getTrainerByUsername(username);
+        Optional<Trainer> result = trainerService.getTrainerByUsername(username, password);
 
         assertTrue(result.isPresent());
         assertEquals(username, result.get().getUser().getUsername());
@@ -104,13 +109,17 @@ class TrainerServiceImplTest {
     @Test
     void whenGetTrainerTrainings_thenSuccess() {
         String trainerUsername = "trainerUsername";
+        Trainer trainer = new Trainer();
+        trainer.setUser(new User());
+        trainer.getUser().setUsername(trainerUsername);
+
         Date from = Date.valueOf("2023-01-01");
         Date to = Date.valueOf("2023-01-31");
         List<Training> expectedTrainings = List.of(new Training(), new Training());
 
         when(trainingRepository.findAll(any(Specification.class))).thenReturn(expectedTrainings);
 
-        List<Training> result = trainerService.getTrainerTrainings(trainerUsername, from, to, "TraineeName");
+        List<Training> result = trainerService.getTrainerTrainings(trainer, from, to, "TraineeName");
 
         assertNotNull(result);
         assertEquals(2, result.size());
@@ -120,11 +129,12 @@ class TrainerServiceImplTest {
     @Test
     void whenGetTrainersNotAssignedToTraineeByUsername_thenSuccess() {
         String username = "traineeUsername";
+        String password = "pass";
         List<Trainer> expectedTrainers = List.of(new Trainer(), new Trainer());
 
         when(trainerRepository.findTrainersNotAssignedToTraineeByUsername(username)).thenReturn(expectedTrainers);
 
-        List<Trainer> result = trainerService.getTrainersNotAssignedToTraineeByUsername(username);
+        List<Trainer> result = trainerService.getTrainersNotAssignedToTraineeByUsername(username, password);
 
         assertNotNull(result);
         assertEquals(2, result.size());
@@ -133,10 +143,11 @@ class TrainerServiceImplTest {
 
     @Test
     void whenUpdateTrainerPasswordAndTrainerNotFound_thenThrowException() {
-        String id = "1";
-        doThrow(new RuntimeException("Trainer not found")).when(userCredentialsService).updatePassword(id, "newPassword");
+        Trainer trainer = new Trainer();
+        trainer.getUser().setId(1L);
+        doThrow(new RuntimeException("Trainer not found")).when(userCredentialsService).updatePassword(String.valueOf(trainer.getUser().getId()), "newPassword");
 
-        assertThrows(RuntimeException.class, () -> trainerService.updateTrainerPassword(id, "newPassword"));
+        assertThrows(RuntimeException.class, () -> trainerService.updateTrainerPassword(trainer, "newPassword"));
     }
 
 }

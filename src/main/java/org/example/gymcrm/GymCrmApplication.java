@@ -94,36 +94,71 @@ public class GymCrmApplication {
         //traineeService.createTrainee(trainee2);
 
         //System.out.println("Two trainee created: " + trainee1.getUser().getUsername() + " and " + trainee1.getUser().getUsername());
-        System.out.println("Existing training types:" + trainingTypes);
+        //System.out.println("Existing training types:" + trainingTypes);
 
-        Trainee existedTrainee = traineeService.getTraineeByUsername("Joe.Doe");
-        existedTrainee.setAddress("St. Delovaya, 12");
-        Trainee existedTrainee1 = traineeService.updateTrainee(existedTrainee);
-        traineeService.updateTraineePassword(String.valueOf(existedTrainee1.getId()), "newPass");
-        //traineeService.updateTraineeProfileStatus(String.valueOf(existedTrainee1.getId()));
+        Trainee existedTrainee = traineeService.getTraineeByUsername("Joe.Doe", "coconut");
+        //existedTrainee.setAddress("St. Delovaya, 12");
+        //existedTrainee.setDateOfBirth(Date.valueOf("2001-01-23"));
+        //Trainee existedTrainee1 = traineeService.updateTrainee(existedTrainee);
+        //traineeService.updateTraineePassword(existedTrainee, "coconut");
+        //traineeService.updateTraineeProfileStatus(existedTrainee);
 
-        Trainer existedTrainer = trainerService.getTrainerByUsername("Bob.Baker").orElseThrow();
-        trainerService.updateTrainerProfileStatus(String.valueOf(existedTrainer.getId()));
+        Trainer existedTrainer = trainerService.getTrainerByUsername("Bob.Baker", "cat").orElseThrow();
+        //existedTrainer.setSpecialization(trainingTypes.get(7));
+        //Trainer existedTrainer1 = trainerService.updateTrainer(existedTrainer);
+        //System.out.println(existedTrainer);
+        //trainerService.updateTrainerPassword(existedTrainer, "cat");
+        //trainerService.updateTrainerProfileStatus(existedTrainer);
 
-        //traineeService.deleteTraineeByUsername("Jane.Smith");
+        //traineeService.deleteTraineeByUsername("Jane.Smith", "0l7Cl72l0n");
 
-        //List<Training> trainingsForExistedTrainee1 = traineeService.getTraineeTrainings(existedTrainee.getUser().getUsername(), Date.valueOf("2003-02-12"), Date.valueOf("2003-02-13"), "Bob.Baker", "Fitness");
-        //System.out.println("Found " + trainingsForExistedTrainee1.size() + " trainings for trainee " + existedTrainee1.toString());
+        //List<Training> trainingsForExistedTrainee1 = traineeService.getTraineeTrainings(existedTrainee, null, null, "Bob", null);
+        //System.out.println("Found " + trainingsForExistedTrainee1.size() + " trainings for trainee " + existedTrainee.toString());
 
-        //List<Training> trainingsForExistedTrainer = trainerService.getTrainerTrainings(existedTrainer.getUser().getUsername(), Date.valueOf("2004-02-13"), Date.valueOf("2004-02-15"), "Alice");
+        // System.out.println(trainingService.getAllTrainings());
+
+        //List<Training> trainingsForExistedTrainer = trainerService.getTrainerTrainings(existedTrainer, null, null,"Joe");
         //System.out.println("Found " + trainingsForExistedTrainer.size() + " trainings for trainer " + existedTrainer);
 
-        Training training = new Training();
-        training.setTrainee(existedTrainee1);
-        training.setTrainer(existedTrainer);
-        training.setTrainingType(trainingTypes.get(0)); // or other index based on training type
-        training.setTrainingDate(Date.valueOf("2003-12-20")); // or your desired date
-        training.setTrainingName("Stretching");
-        training.setTrainingDuration(123);
-        //Training createdTraining = trainingService.createTraining(training);
-        //System.out.println(createdTraining);
+//        Training training = new Training();
+//        training.setTrainee(existedTrainee);
+//        training.setTrainer(existedTrainer);
+//        training.setTrainingType(trainingTypes.get(4));
+//        training.setTrainingDate(Date.valueOf("2003-12-23"));
+//        training.setTrainingName("Test");
+//        training.setTrainingDuration(123);
+//        Training createdTraining = trainingService.createTraining(training);
+//        System.out.println(createdTraining);
 
-        //List<Trainer> notAssignedTrainers = trainerService.getTrainersNotAssignedToTraineeByUsername(existedTrainee.getUser().getUsername());
-        //System.out.println(notAssignedTrainers);
+//        List<Trainer> notAssignedTrainers = trainerService.getTrainersNotAssignedToTraineeByUsername(existedTrainee.getUser().getUsername(), existedTrainee.getUser().getPassword());
+//        System.out.println(notAssignedTrainers);
+
+//        System.out.println("Trainee list number of trainee " + existedTrainee.getUser().getUsername() + " is " + existedTrainee.getTrainers().size());
+//        List<Trainer> trainers = trainerService.getAllTrainers();
+//        traineeService.addTrainersToTrainee(existedTrainee, trainers);
+//        System.out.println("Trainee list number of trainee " + existedTrainee.getUser().getUsername() + " is " + existedTrainee.getTrainers().size());
+
+        //traineeService.updateTraineePassword(existedTrainee, "newPassword");
+
+        Trainer trainer = trainerService.getTrainerByUsername("Alice.Adams", "KVICkyEDGi").orElseThrow();
+        Trainee existedTrainee2 = traineeService.getTraineeByUsername("Jane.Smith", "atgn0taX5q");
+//        traineeService.addTrainersToTrainee(existedTrainee2, List.of(trainer));
+//        Training training = new Training();
+//        training.setTrainee(existedTrainee2);
+//        training.setTrainer(trainer);
+//        training.setTrainingType(trainingTypes.get(6));
+//        training.setTrainingDate(Date.valueOf("2003-10-13"));
+//        training.setTrainingName("Test3");
+//        training.setTrainingDuration(123);
+//        Training createdTraining = trainingService.createTraining(training);
+//        System.out.println(createdTraining);
+//
+//        System.out.println("Training list: " + existedTrainee2.getTrainingList());
+
+        traineeService.deleteTraineeByUsername("Jane.Smith", "atgn0taX5q");
+//        traineeService.deleteTraineeByUsername("Jane.Smith2", "$nEv8uxvos");
+
+
+
     }
 }
