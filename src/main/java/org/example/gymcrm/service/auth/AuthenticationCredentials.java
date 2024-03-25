@@ -107,6 +107,9 @@ public class AuthenticationCredentials {
         if (obj instanceof Trainer trainer) {
             user = trainer.getUser();
         }
+        if (obj instanceof User user1) {
+            user = user1;
+        }
         return user;
     }
 

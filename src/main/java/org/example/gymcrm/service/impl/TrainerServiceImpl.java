@@ -201,6 +201,7 @@ public class TrainerServiceImpl implements TrainerService {
         logger.debug("Fetching trainers not assigned to trainee with username: {}", username);
         List<Trainer> trainers = trainerRepository.findTrainersNotAssignedToTraineeByUsername(username);
         logger.info("Found {} trainers not assigned to trainee with username: {}", trainers.size(), username);
+        logger.info("Trainers: {}", trainers);
         return trainers;
     }
 }

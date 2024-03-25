@@ -1,6 +1,8 @@
 package org.example.gymcrm.service.impl;
 
 import jakarta.validation.ConstraintViolationException;
+import org.example.gymcrm.model.Trainee;
+import org.example.gymcrm.model.Trainer;
 import org.example.gymcrm.model.Training;
 import org.example.gymcrm.repository.TrainingRepository;
 import org.example.gymcrm.service.ValidationService;
@@ -34,7 +36,12 @@ class TrainingServiceImplTest {
     @Test
     void whenCreateTraining_thenSuccess() {
         Training training = new Training();
-        // Assume training is properly initialized
+        Trainer trainer = new Trainer();
+        trainer.setId(1L);
+        training.setTrainer(trainer);
+        Trainee trainee = new Trainee();
+        trainee.setId(1L);
+        training.setTrainee(trainee);
 
         when(trainingRepository.save(any(Training.class))).thenReturn(training);
 

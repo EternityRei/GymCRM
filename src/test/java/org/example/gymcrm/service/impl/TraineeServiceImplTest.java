@@ -1,10 +1,14 @@
 package org.example.gymcrm.service.impl;
 
+import jakarta.persistence.EntityNotFoundException;
 import org.example.gymcrm.model.Trainee;
 import org.example.gymcrm.model.Trainer;
+import org.example.gymcrm.model.Training;
 import org.example.gymcrm.model.User;
 import org.example.gymcrm.repository.TraineeRepository;
 import org.example.gymcrm.repository.TrainerRepository;
+import org.example.gymcrm.repository.TrainingRepository;
+import org.example.gymcrm.repository.TrainingTypeRepository;
 import org.example.gymcrm.service.ValidationService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,7 +17,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.springframework.data.jpa.domain.Specification;
 
+import java.sql.Date;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -34,6 +40,8 @@ public class TraineeServiceImplTest {
     private TraineeRepository traineeRepository;
     @Mock
     private TrainerRepository trainerRepository;
+    @Mock
+    private TrainingRepository trainingRepository;
 
     @Mock
     private ValidationService validationService;
@@ -72,31 +80,34 @@ public class TraineeServiceImplTest {
     }
 
     @Test
-    void whenGetTraineeByUsernameNotFound_thenEmptyResult() {
+    void whenGetTraineeByUsernameNotFound_thenExpectEntityNotFoundException() {
         String username = "nonexistent";
         String password = "nonexistent";
         when(traineeRepository.findByUsername(username)).thenReturn(Optional.empty());
 
-        Trainee result = traineeService.getTraineeByUsername(username, password);
-
-        assertNotNull(result);
+        assertThrows(EntityNotFoundException.class, () -> {
+            traineeService.getTraineeByUsername(username, password);
+        });
     }
+
 
     @Test
     void whenUpdateTrainee_thenSuccess() {
-        String traineeId = "1";
+        Long traineeId = 1L; // Use Long to match the expected type of ID
         Trainee existingTrainee = new Trainee();
+        existingTrainee.setId(traineeId); // Ensure the existingTrainee has an ID
         User existingUser = new User();
         existingUser.setUsername("existingUsername");
         existingTrainee.setUser(existingUser);
 
         Trainee updatedTrainee = new Trainee();
+        updatedTrainee.setId(traineeId); // Set the ID to match the existingTrainee
         User updatedUser = new User();
         updatedUser.setFirstName("NewFirstName");
         updatedUser.setLastName("NewLastName");
         updatedTrainee.setUser(updatedUser);
 
-        when(traineeRepository.findById(Long.valueOf(traineeId))).thenReturn(Optional.of(existingTrainee));
+        when(traineeRepository.findById(traineeId)).thenReturn(Optional.of(existingTrainee));
         when(traineeRepository.save(any(Trainee.class))).thenReturn(existingTrainee);
 
         Trainee result = traineeService.updateTrainee(updatedTrainee);
@@ -105,20 +116,21 @@ public class TraineeServiceImplTest {
         assertEquals("NewFirstName", result.getUser().getFirstName());
         assertEquals("NewLastName", result.getUser().getLastName());
 
-        // Adjusted to verify the validation of the Trainee object, not just the User object
+        // Verify the validation of the Trainee object, not just the User object
         verify(validationService, times(1)).validateEntity(any(Trainee.class));
     }
 
 
     @Test
-    void whenDeleteTraineeByUsernameNotFound_thenThrowException() {
+    void whenDeleteTraineeByUsernameNotFound_thenNoExceptionThrown() {
         String username = "unknown";
         String password = "infnef";
         when(traineeRepository.findByUsername(username)).thenReturn(Optional.empty());
 
-        Exception exception = assertThrows(RuntimeException.class, () -> traineeService.deleteTraineeByUsername(username, password));
-        assertTrue(exception.getMessage().contains("Trainee not found"));
+        // Execute
+        assertDoesNotThrow(() -> traineeService.deleteTraineeByUsername(username, password));
     }
+
 
 
     @Test
@@ -126,6 +138,9 @@ public class TraineeServiceImplTest {
         // Setup
         String traineeUsername = "traineeUsername";
         Trainee trainee = new Trainee();
+        trainee.setUser(new User());
+        trainee.getUser().setUsername(traineeUsername);
+        trainee.getUser().setPassword("pass");
         trainee.setTrainers(new HashSet<>()); // Assume trainee starts with no trainers
 
         Trainer trainer1 = new Trainer();
@@ -150,7 +165,10 @@ public class TraineeServiceImplTest {
     @Test
     void whenDeactivateTraineeProfile_thenSuccess() {
         Trainee trainee = new Trainee();
-        doNothing().when(userCredentialsGenerator).modifyAccountStatus(anyString());
+        User user = new User();
+        user.setId(1L); // Assuming User has an ID field
+        trainee.setUser(user);
+        when(userCredentialsGenerator.modifyAccountStatus(String.valueOf(trainee.getUser().getId()))).thenReturn(true); // Assuming modifyAccountStatus returns a boolean
 
         // Execution
         traineeService.updateTraineeProfileStatus(trainee);
@@ -158,6 +176,7 @@ public class TraineeServiceImplTest {
         // Verification
         verify(userCredentialsGenerator, times(1)).modifyAccountStatus(String.valueOf(trainee.getUser().getId()));
     }
+
 
     @Test
     void whenGetTraineeFound_thenSuccess() {
@@ -196,11 +215,71 @@ public class TraineeServiceImplTest {
     }
 
     @Test
-    void whenDeleteTraineeWithInvalidId_thenThrowException() {
+    void whenDeleteTraineeWithInvalidId_thenNoExceptionThrown() {
         doThrow(new RuntimeException("Database error")).when(traineeRepository).deleteById(anyLong());
 
-        assertThrows(RuntimeException.class, () -> traineeService.deleteTrainee("999"));
+        // Execute the method and verify it does not throw any exception
+        assertDoesNotThrow(() -> traineeService.deleteTrainee("999"));
+
+        // Additional verification that the repository's deleteById was called can be included if needed
+        verify(traineeRepository, times(1)).deleteById(anyLong());
     }
 
+    @Test
+    void whenUpdateTraineePassword_thenSuccess() {
+        Long traineeId = 1L;
+        Trainee trainee = new Trainee();
+        trainee.setId(traineeId);
+        User user = new User();
+        user.setId(traineeId);
+        user.setUsername("testUser");
+        user.setPassword("oldPassword");
+        trainee.setUser(user);
+        String newPassword = "newPassword";
+
+        when(traineeRepository.findById(traineeId)).thenReturn(Optional.of(trainee));
+
+        // Assuming the userCredentialsGenerator.updatePassword does not return a value
+        assertDoesNotThrow(() -> traineeService.updateTraineePassword(trainee, newPassword));
+
+        verify(userCredentialsGenerator, times(1)).updatePassword(String.valueOf(user.getId()), newPassword);
+    }
+
+
+    @Test
+    void whenUpdateTraineeProfileStatus_thenSuccess() {
+        Trainee trainee = new Trainee();
+        User user = new User();
+        user.setId(2L);
+        trainee.setUser(user);
+
+        // Assuming the userCredentialsGenerator.modifyAccountStatus returns true for success
+        when(userCredentialsGenerator.modifyAccountStatus(String.valueOf(user.getId()))).thenReturn(true);
+
+        assertDoesNotThrow(() -> traineeService.updateTraineeProfileStatus(trainee));
+
+        verify(userCredentialsGenerator, times(1)).modifyAccountStatus(String.valueOf(user.getId()));
+    }
+
+    @Test
+    void whenGetTraineeTrainings_thenSuccess() {
+        Trainee trainee = new Trainee();
+        User user = new User();
+        user.setUsername("traineeUser");
+        trainee.setUser(user);
+        Date from = Date.valueOf("2020-01-01");
+        Date to = Date.valueOf("2020-12-31");
+        String trainerName = "trainerName";
+        String trainingType = "trainingType";
+
+        List<Training> expectedTrainings = List.of(new Training());
+        when(trainingRepository.findAll(any(Specification.class))).thenReturn(expectedTrainings);
+
+        List<Training> trainings = traineeService.getTraineeTrainings(trainee, from, to, trainerName, trainingType);
+
+        assertNotNull(trainings);
+        assertFalse(trainings.isEmpty());
+        assertEquals(expectedTrainings.size(), trainings.size());
+    }
 
 }

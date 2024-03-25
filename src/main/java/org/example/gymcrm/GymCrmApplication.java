@@ -112,13 +112,13 @@ public class GymCrmApplication {
 
         //traineeService.deleteTraineeByUsername("Jane.Smith", "0l7Cl72l0n");
 
-        //List<Training> trainingsForExistedTrainee1 = traineeService.getTraineeTrainings(existedTrainee, null, null, "Bob", null);
-        //System.out.println("Found " + trainingsForExistedTrainee1.size() + " trainings for trainee " + existedTrainee.toString());
+//        List<Training> trainingsForExistedTrainee1 = traineeService.getTraineeTrainings(existedTrainee, null, null, "Bob", null);
+//        System.out.println("Found " + trainingsForExistedTrainee1.size() + " trainings for trainee " + existedTrainee.toString());
 
         // System.out.println(trainingService.getAllTrainings());
 
-        //List<Training> trainingsForExistedTrainer = trainerService.getTrainerTrainings(existedTrainer, null, null,"Joe");
-        //System.out.println("Found " + trainingsForExistedTrainer.size() + " trainings for trainer " + existedTrainer);
+//        List<Training> trainingsForExistedTrainer = trainerService.getTrainerTrainings(existedTrainer, null, null,"Joe");
+//        System.out.println("Found " + trainingsForExistedTrainer.size() + " trainings for trainer " + existedTrainer);
 
 //        Training training = new Training();
 //        training.setTrainee(existedTrainee);
@@ -140,9 +140,10 @@ public class GymCrmApplication {
 
         //traineeService.updateTraineePassword(existedTrainee, "newPassword");
 
-        Trainer trainer = trainerService.getTrainerByUsername("Alice.Adams", "KVICkyEDGi").orElseThrow();
-        Trainee existedTrainee2 = traineeService.getTraineeByUsername("Jane.Smith", "atgn0taX5q");
-//        traineeService.addTrainersToTrainee(existedTrainee2, List.of(trainer));
+        //Trainer trainer = trainerService.getTrainerByUsername("Alice.Adams", "KVICkyEDGi").orElseThrow();
+        Trainer existedTrainer2 = trainerService.getTrainerByUsername("Kate.Kate", "abc").orElseThrow();
+        Trainee existedTrainee6 = traineeService.getTraineeByUsername("Joe.Doe", "coconut");
+        traineeService.addTrainersToTrainee(existedTrainee6, List.of(existedTrainer2));
 //        Training training = new Training();
 //        training.setTrainee(existedTrainee2);
 //        training.setTrainer(trainer);
@@ -155,8 +156,10 @@ public class GymCrmApplication {
 //
 //        System.out.println("Training list: " + existedTrainee2.getTrainingList());
 
-        traineeService.deleteTraineeByUsername("Jane.Smith", "atgn0taX5q");
+//        traineeService.deleteTraineeByUsername("Jane.Smith", "atgn0taX5q");
 //        traineeService.deleteTraineeByUsername("Jane.Smith2", "$nEv8uxvos");
+
+        traineeService.deleteTraineeByUsername("Joe.Doe", "coconut");
 
 
 

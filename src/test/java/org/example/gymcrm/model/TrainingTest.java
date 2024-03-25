@@ -18,7 +18,7 @@ public class TrainingTest {
 
     @BeforeEach
     void setUp() {
-        trainer = new Trainer(1L, "Fitness", new User()); // Assuming a User class exists
+        trainer = new Trainer(1L, new TrainingType(1L, "Fitness"), new User()); // Assuming a User class exists
         trainee = new Trainee(); // Assuming default constructor is adequate for this test
         trainingType = new TrainingType(); // Assuming a default constructor and this is another entity
         trainingDate = new Date(); // Use a fixed date for consistency in real tests
@@ -33,7 +33,7 @@ public class TrainingTest {
 
     @Test
     void getAndSetTrainer() {
-        Trainer newTrainer = new Trainer(2L, "Yoga", new User()); // New trainer for testing
+        Trainer newTrainer = new Trainer(2L, new TrainingType(2L, "Yoga"), new User()); // New trainer for testing
         training.setTrainer(newTrainer);
         assertEquals(newTrainer, training.getTrainer());
     }
